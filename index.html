@@ -1,0 +1,1345 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b4a31">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>3 Кубика</title>
+<style>
+:root{
+  --felt:#0e5a3a; --felt-dark:#0a3f29; --gold:#e8c35a; --gold-2:#f6dd8f;
+  --ink:#f3efe2; --muted:#a9c2b4; --red:#b3261e; --panel:rgba(0,0,0,.26);
+  --line:rgba(232,195,90,.35); --die:clamp(54px,15vw,78px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);
+  background:#062a1d radial-gradient(ellipse at 50% 0%,#14774e 0%,#0b4a31 48%,#062a1d 100%) fixed;
+  -webkit-tap-highlight-color:transparent;overflow-x:hidden;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;touch-action:manipulation}
+input,select{font:inherit;font-size:16px;color:var(--ink)}
+.muted{color:var(--muted)} .small{font-size:12px} .gold-t{color:var(--gold)}
+[hidden]{display:none!important}
+
+.screen{display:none;min-height:100vh;min-height:100dvh}
+.screen.active{display:flex;flex-direction:column}
+.screen.center{align-items:center;justify-content:center;padding:24px 16px}
+
+.card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.logo{display:flex;justify-content:center;gap:8px;font-size:40px;line-height:1}
+.logo span{display:inline-block;animation:bob 2.4s ease-in-out infinite}
+.logo span:nth-child(2){animation-delay:.2s}.logo span:nth-child(3){animation-delay:.4s}
+@keyframes bob{50%{transform:translateY(-6px) rotate(8deg)}}
+h1{text-align:center;font-size:34px;letter-spacing:1px;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.4)}
+h2{font-size:20px;color:var(--gold);margin-bottom:4px}
+.card label{font-size:13px;color:var(--muted)}
+.field{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);outline:none}
+.field:focus{border-color:var(--gold)}
+.btn{padding:11px 16px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-weight:600;transition:transform .1s,opacity .2s;white-space:nowrap}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.gold{background:linear-gradient(#f6dd8f,#d4a937);color:#2a1d00;border-color:#f7e3a1}
+.btn.big{padding:15px 18px;font-size:17px;width:100%}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.profile{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.22);border-radius:14px;padding:12px 14px}
+.profile b{font-size:18px}.profile .right{text-align:right}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff5252;margin-left:4px;vertical-align:middle}
+.center-t{text-align:center}
+
+/* ---------- Игровой экран ---------- */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));background:rgba(4,30,20,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.icon{width:40px;height:40px;border-radius:10px;font-size:18px;display:grid;place-items:center;background:rgba(255,255,255,.07);flex:none;position:relative}
+.tb-title{flex:1;min-width:0;line-height:1.15}
+.tb-title>div:first-child{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.code-pill{padding:7px 10px;border-radius:10px;border:1px dashed var(--gold);color:var(--gold);font-weight:800;letter-spacing:1px;flex:none}
+.tb-bal{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;flex:none}
+.tb-bal b{color:var(--gold);font-size:17px}
+.badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ff5252;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+
+.game{flex:1;display:flex;gap:16px;justify-content:center;align-items:flex-start;width:100%;max-width:1100px;margin:0 auto;padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+.table{flex:1;max-width:640px;min-width:0;display:flex;flex-direction:column;gap:10px}
+
+.tray{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 12px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.dice-row{display:flex;gap:clamp(16px,6vw,34px);perspective:800px;padding:8px 0 6px}
+.die-slot{width:var(--die);height:var(--die);position:relative}
+.die-shadow{position:absolute;left:8%;right:8%;bottom:-12px;height:12px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(4px)}
+.die-wrap{position:absolute;inset:0;transform-style:preserve-3d}
+.die{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 1.8s cubic-bezier(.15,.65,.25,1)}
+.die-slot:nth-child(2) .die{transition-duration:1.95s}
+.die-slot:nth-child(3) .die{transition-duration:2.1s}
+.tossing .die-wrap{animation:toss 2.1s cubic-bezier(.3,.6,.4,1)}
+.tossing .die-shadow{animation:shadow 2.1s cubic-bezier(.3,.6,.4,1)}
+@keyframes toss{0%{transform:translateY(0)}16%{transform:translateY(-48px) scale(1.1)}36%{transform:translateY(0)}50%{transform:translateY(-18px)}63%{transform:translateY(0)}74%{transform:translateY(-6px)}84%,100%{transform:translateY(0)}}
+@keyframes shadow{0%{transform:scale(1);opacity:1}16%{transform:scale(.55);opacity:.4}36%{transform:scale(1);opacity:1}50%{transform:scale(.8);opacity:.7}63%,100%{transform:scale(1);opacity:1}}
+.face{position:absolute;inset:0;border-radius:16%;background:radial-gradient(circle at 30% 25%,#fff,#efeadf 65%,#d9d2c0);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:15%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),inset 0 -5px 9px rgba(0,0,0,.16);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.pip{width:76%;height:76%;margin:auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#555,#0d0d0d)}
+.pip.red{width:105%;height:105%;background:radial-gradient(circle at 35% 30%,#ff7070,#a30000)}
+.f1{transform:translateZ(calc(var(--die) / 2))}
+.f6{transform:rotateY(180deg) translateZ(calc(var(--die) / 2))}
+.f2{transform:rotateY(90deg) translateZ(calc(var(--die) / 2))}
+.f5{transform:rotateY(-90deg) translateZ(calc(var(--die) / 2))}
+.f3{transform:rotateX(90deg) translateZ(calc(var(--die) / 2))}
+.f4{transform:rotateX(-90deg) translateZ(calc(var(--die) / 2))}
+
+.roll-info{text-align:center;min-height:52px;display:flex;flex-direction:column;justify-content:center;gap:4px;padding-top:4px}
+.ri-main{font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.ri-main.muted{font-size:15px;font-weight:500}
+.ri-main.rolling{color:var(--gold);animation:blink .6s ease-in-out infinite alternate}
+@keyframes blink{to{opacity:.4}}
+.dv{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:8px;background:#f5f1e6;color:#111}
+.op{color:var(--muted)}
+.tot{color:var(--gold);font-size:26px}
+.trip{background:var(--red);color:#fff;font-size:13px;padding:4px 8px;border-radius:8px;letter-spacing:.5px}
+.ri-sub{font-size:13px;color:var(--muted)}
+.ri-sub b{color:var(--ink)}
+.ri-res{font-weight:700;font-size:15px}
+.ri-res.win{color:#7dff9a}.ri-res.lose{color:#ff9b8f}
+.history{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:0}
+.history span{font-size:11px;padding:3px 7px;border-radius:999px;background:rgba(0,0,0,.3);color:var(--muted)}
+.history span b{color:var(--ink);margin-left:4px}
+.history span.t{background:rgba(179,38,30,.6);color:#fff}
+
+.status{text-align:center;font-size:14px;color:var(--gold-2);min-height:20px}
+.status.urgent{color:#ff8a80;font-weight:700}
+
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;user-select:none;-webkit-user-select:none}
+.cell{position:relative;aspect-ratio:1.15;border:2px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .2s,border-color .2s,box-shadow .2s;overflow:hidden;-webkit-touch-callout:none}
+.cell:active{background:rgba(255,255,255,.08)}
+.board.locked .cell{cursor:default}
+.num{display:grid;place-items:center;width:1.85em;height:1.85em;border-radius:50%;font-weight:800;font-size:clamp(15px,4.4vw,22px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.num.red{background:#b3261e}.num.black{background:#141414}
+.cell.triple{grid-column:span 2;aspect-ratio:auto;background:linear-gradient(135deg,rgba(179,38,30,.45),rgba(0,0,0,.2))}
+.cell.triple .lbl{font-size:clamp(20px,5.5vw,28px);font-weight:900;color:var(--gold)}
+.cell.triple .sub{font-size:11px;color:var(--muted)}
+.cell .stake{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);background:var(--gold);color:#2a1d00;font-size:clamp(9px,2.5vw,12px);font-weight:800;padding:1px 6px;border-radius:999px;white-space:nowrap;display:none;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.cell.has .stake{display:block}
+.cell.has{border-color:var(--gold)}
+.cell .why{position:absolute;top:2px;right:4px;font-size:9px;color:var(--gold);font-weight:700;max-width:70%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cell .marks{position:absolute;top:4px;left:4px;display:flex;gap:2px;flex-wrap:wrap;max-width:50%}
+.cell .marks i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.5)}
+.cell.hit{border-color:var(--gold);box-shadow:0 0 0 2px rgba(232,195,90,.45),0 0 16px rgba(232,195,90,.45);background:rgba(232,195,90,.14)}
+.cell.won{background:rgba(125,255,154,.25);border-color:#7dff9a;animation:pulse .9s ease-in-out 3}
+.cell.lost{border-color:rgba(255,120,110,.8)}
+@keyframes pulse{50%{transform:scale(1.07)}}
+
+.betbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.betbar b{color:var(--ink)}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding-top:4px}
+.chip{width:clamp(44px,12.5vw,54px);aspect-ratio:1;border-radius:50%;font-weight:800;font-size:13px;color:#fff;background:var(--c);border:4px dashed rgba(255,255,255,.75);box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 0 0 3px var(--c);transition:transform .12s,box-shadow .12s;text-shadow:0 1px 1px rgba(0,0,0,.5)}
+.chip.sel{transform:translateY(-6px) scale(1.07);box-shadow:0 0 0 3px var(--gold),0 8px 14px rgba(0,0,0,.45)}
+.actions{display:flex;gap:8px}.actions .btn{flex:1;padding:10px 6px;font-size:14px}
+.main-actions{display:flex;gap:8px}
+
+.side{width:300px;flex:none;display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;position:sticky;top:76px;max-height:calc(100vh - 92px)}
+.dealer .side,.dealer .players-mini,.dealer #btnChat{display:none!important}
+.side-head{display:flex;justify-content:space-between;align-items:center}
+.close-side{display:none}
+.players{display:flex;flex-direction:column;gap:6px}
+.pl{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.22);font-size:14px}
+.pl i{width:10px;height:10px;border-radius:50%;flex:none}
+.pl .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .pb{color:var(--gold);font-weight:700}
+.pl .ps{width:18px;text-align:center}
+.pl.ready{outline:1px solid rgba(125,255,154,.5)}
+.players-mini{display:none;gap:6px;overflow-x:auto;scrollbar-width:none}
+.players-mini .pm{flex:none;display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.28);font-size:12px;white-space:nowrap}
+.players-mini .pm i{width:8px;height:8px;border-radius:50%}
+.players-mini .pm.ready{outline:1px solid rgba(125,255,154,.6)}
+.chat{flex:1;min-height:180px;display:flex;flex-direction:column;gap:8px}
+.chat-log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;font-size:13px;padding-right:4px;min-height:120px}
+.chat-row{line-height:1.35;word-wrap:break-word;overflow-wrap:anywhere}
+.chat-row b{margin-right:4px}
+.chat-row.sys{color:var(--muted);font-size:12px;font-style:italic}
+.chat-form{display:flex;gap:6px}
+.chat-form input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);outline:none}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:29;display:none}
+.backdrop.open{display:block}
+
+@media (min-width:900px){ #btnChat{display:none!important} }
+@media (max-width:899px){
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:72vh;height:72dvh;max-height:none;border-radius:20px 20px 0 0;background:#0a3a27;padding:14px 16px calc(14px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease;z-index:30;box-shadow:0 -10px 30px rgba(0,0,0,.5)}
+  .side.open{transform:none}
+  .close-side{display:grid}
+  .players-mini{display:flex}
+  .game{padding-left:12px;padding-right:12px}
+}
+@media (max-width:380px){ .tb-bal .small{display:none} .code-pill{padding:6px 7px;font-size:13px} .actions .btn{font-size:12px} }
+
+/* ---------- Модалки ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.open{display:flex}
+.modal-card{position:relative;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;background:#0b4230;border:1px solid var(--line);border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-card .x{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.08)}
+.modal-card p,.modal-card li{font-size:14px;line-height:1.5}
+.modal-card ul{padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.daily-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dtile{border-radius:12px;padding:8px 4px;text-align:center;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1)}
+.dtile .dd{font-size:11px;color:var(--muted)}
+.dtile .da{font-weight:800;color:var(--gold);font-size:15px}
+.dtile .dc{font-size:16px}
+.dtile.done{opacity:.55}
+.dtile.today{border-color:var(--gold);box-shadow:0 0 14px rgba(232,195,90,.5);background:rgba(232,195,90,.15)}
+.dtile.next{border-style:dashed;border-color:var(--gold)}
+.code-big{font-size:34px;font-weight:900;letter-spacing:6px;text-align:center;color:var(--gold);padding:8px;border:2px dashed var(--gold);border-radius:14px}
+
+#toasts{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:calc(100% - 32px);max-width:420px}
+.toast{background:rgba(10,20,15,.95);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .3s,transform .3s}
+.toast.err{border-color:#ff7b6e}.toast.ok{border-color:#7dff9a}
+.toast.hide{opacity:0;transform:translateY(8px)}
+</style>
+</head>
+<body>
+
+<!-- Регистрация -->
+<div id="screen-register" class="screen center">
+  <div class="card">
+    <div class="logo"><span>🎲</span><span>🎲</span><span>🎲</span></div>
+    <h1>3 Кубика</h1>
+    <p class="muted center-t">Настольная игра на удачу. Без рекламы.</p>
+    <label for="regName">Ваше имя</label>
+    <input id="regName" class="field" maxlength="16" placeholder="Например, Алекс" autocomplete="nickname">
+    <button class="btn gold big" id="btnRegister">Начать · +1 000 фишек</button>
+  </div>
+</div>
+
+<!-- Меню -->
+<div id="screen-menu" class="screen center">
+  <div class="card">
+    <div class="logo"><span>🎲</span><span>🎲</span><span>🎲</span></div>
+    <h1>3 Кубика</h1>
+    <div class="profile">
+      <div><div class="muted small">Игрок</div><b id="menuName"></b> <button id="btnRename" class="muted" title="Сменить имя">✎</button></div>
+      <div class="right"><div class="muted small">Баланс</div><b class="gold-t" id="menuBal"></b></div>
+    </div>
+    <button class="btn gold big" id="btnDealer">🎲 Игра с дилером</button>
+    <button class="btn big" id="btnCreate">🏠 Создать комнату</button>
+    <button class="btn big" id="btnJoin">🔗 Войти по коду</button>
+    <div class="row">
+      <button class="btn" id="btnDaily">🎁 Бонус дня<span class="dot" id="dailyDot" hidden></span></button>
+      <button class="btn" id="btnRules">📖 Правила</button>
+    </div>
+    <p class="muted small center-t">Онлайн до 4 игроков · прямое соединение P2P · без рекламы</p>
+  </div>
+</div>
+
+<!-- Игра -->
+<div id="screen-game" class="screen">
+  <header class="topbar">
+    <button class="icon" id="btnBack" title="В меню">←</button>
+    <div class="tb-title"><div id="tbMode">Игра с дилером</div><div class="tb-sub" id="tbSub"></div></div>
+    <button class="code-pill" id="btnCode" hidden></button>
+    <div class="tb-bal"><span class="muted small">Баланс</span><b id="bal">0</b></div>
+    <button class="icon" id="btnSound" title="Звук">🔊</button>
+    <button class="icon" id="btnChat" title="Игроки и чат">💬<span class="badge" id="chatBadge" hidden></span></button>
+  </header>
+  <div class="game">
+    <main class="table">
+      <div class="players-mini" id="playersMini"></div>
+      <section class="tray">
+        <div class="dice-row" id="diceRow"></div>
+        <div class="roll-info" id="rollInfo"></div>
+        <div class="history" id="history"></div>
+      </section>
+      <div class="status" id="status"></div>
+      <section class="board" id="board"></section>
+      <div class="betbar"><span id="betInfo"></span><span id="limitInfo"></span></div>
+      <section class="chips" id="chips"></section>
+      <section class="actions">
+        <button class="btn" id="btnUndo">↶ Отменить</button>
+        <button class="btn" id="btnClear">✕ Очистить</button>
+        <button class="btn" id="btnRepeat">⟳ Повторить</button>
+      </section>
+      <div class="main-actions">
+        <button class="btn gold big" id="btnMain">🎲 Бросить</button>
+        <button class="btn big" id="btnForce" hidden>🎲 Бросить сейчас</button>
+      </div>
+    </main>
+    <aside class="side" id="side">
+      <div class="side-head"><b>Игроки</b><button class="icon close-side" id="btnCloseSide">✕</button></div>
+      <div class="players" id="players"></div>
+      <div class="chat">
+        <div class="chat-log" id="chatLog"></div>
+        <form class="chat-form" id="chatForm"><input id="chatInput" maxlength="200" placeholder="Сообщение…" autocomplete="off"><button class="btn gold" type="submit">➤</button></form>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="backdrop" id="backdrop"></div>
+
+<!-- Ежедневный бонус -->
+<div class="modal" id="modalDaily"><div class="modal-card">
+  <button class="x" data-close>✕</button>
+  <h2>🎁 Ежедневный бонус</h2>
+  <div class="daily-grid" id="dailyGrid"></div>
+  <p id="dailyText" class="muted"></p>
+  <button class="btn gold big" id="btnClaim">Забрать</button>
+</div></div>
+
+<!-- Правила -->
+<div class="modal" id="modalRules"><div class="modal-card">
+  <button class="x" data-close>✕</button>
+  <h2>📖 Правила</h2>
+  <ul>
+    <li>Поле: числа <b>1–18</b> и клетка <b>«3х»</b>.</li>
+    <li>Выберите фишку внизу и нажимайте на клетки. Каждое нажатие добавляет фишку. Правый клик или долгое нажатие убирает ставку с клетки.</li>
+    <li>Ставить можно не больше чем на <b>3 клетки</b> за раунд. На <b>одну</b> клетку — до <b>10 000</b>, на <b>2–3</b> клетки — до <b>2 000</b> на каждую.</li>
+    <li>Бросаются 3 кубика сразу. <b>Число выигрывает</b>, если оно выпало на любом кубике, равно сумме любых двух кубиков или сумме всех трёх.<br><span class="muted">Пример: 2 · 5 · 4 → выигрывают 2, 4, 5 (кубики), 7, 6, 9 (пары), 11 (сумма).</span></li>
+    <li><b>«3х»</b> выигрывает, если на всех трёх кубиках одно и то же число (трипл).</li>
+    <li>Сыгравшая ставка <b>удваивается</b>: поставили 1 000 — получили 2 000.</li>
+    <li>Старт — 1 000 фишек. Бонус дня: 100 → 200 → … → 700 за 7-й день, затем цикл сначала. Пропуск дня сбрасывает серию.</li>
+    <li><b>Онлайн:</b> создатель комнаты — хост, к нему подключаются до 3 друзей по коду. Все ставят, жмут «Готов», и кубики бросаются для всех сразу. Когда первый игрок готов, у остальных есть 25 секунд.</li>
+  </ul>
+</div></div>
+
+<!-- Создание комнаты -->
+<div class="modal" id="modalCreate"><div class="modal-card">
+  <button class="x" data-close>✕</button>
+  <h2>🏠 Новая комната</h2>
+  <p>Ваше устройство станет хостом: кубики бросаются у вас, друзья подключаются к вам напрямую. Не закрывайте вкладку и не блокируйте экран, пока идёт игра.</p>
+  <button class="btn gold big" id="btnDoCreate">Создать комнату</button>
+</div></div>
+
+<!-- Вход по коду -->
+<div class="modal" id="modalJoin"><div class="modal-card">
+  <button class="x" data-close>✕</button>
+  <h2>🔗 Войти в комнату</h2>
+  <label class="muted small" for="joinCode">Код комнаты от хоста</label>
+  <input id="joinCode" class="field" maxlength="8" placeholder="ABCDE" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:4px;font-weight:800;text-align:center;font-size:22px">
+  <button class="btn gold big" id="btnDoJoin">Подключиться</button>
+</div></div>
+
+<!-- Код комнаты -->
+<div class="modal" id="modalCode"><div class="modal-card">
+  <button class="x" data-close>✕</button>
+  <h2>Код комнаты</h2>
+  <div class="code-big" id="codeBig"></div>
+  <p class="muted">Друзья открывают игру у себя, нажимают «Войти по коду» и вводят этот код.</p>
+  <div class="row"><button class="btn gold" id="btnCopyCode">Копировать</button><button class="btn" id="btnShareCode">Поделиться</button></div>
+</div></div>
+
+<!-- Смена имени -->
+<div class="modal" id="modalName"><div class="modal-card">
+  <button class="x" data-close>✕</button>
+  <h2>Имя игрока</h2>
+  <input id="nameInput" class="field" maxlength="16">
+  <button class="btn gold big" id="btnSaveName">Сохранить</button>
+</div></div>
+
+<!-- Подтверждение -->
+<div class="modal" id="modalConfirm"><div class="modal-card">
+  <h2 id="confirmText"></h2>
+  <div class="row"><button class="btn" id="confirmNo">Отмена</button><button class="btn gold" id="confirmYes">Да</button></div>
+</div></div>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+// ================= Константы =================
+const START_BALANCE = 1000;
+const DAILY = [100, 200, 300, 400, 500, 600, 700];
+const LIMIT_SINGLE = 10000, LIMIT_MULTI = 2000, MAX_CELLS = 3;
+const CHIPS = [
+  {v:10, c:'#3a6fd8'}, {v:50, c:'#c62828'}, {v:100, c:'#2e7d32'},
+  {v:500, c:'#7b1fa2'}, {v:1000, c:'#c99400'}, {v:5000, c:'#e65100'}
+];
+const MAX_PLAYERS = 4;
+const ROLL_MS = 2300;          // длительность анимации броска
+const BET_TIMER_S = 25;        // таймер для остальных после первого «Готов»
+const HB_TIMEOUT = 20000;      // потеря связи
+const PLAYER_COLORS = ['#f4c430', '#4fc3f7', '#ff7043', '#ba68c8'];
+const PEER_PREFIX = 'tc3k-';
+const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const CELLS = [...Array.from({length:18}, (_, i) => String(i + 1)), '3x'];
+const STORE_KEY = 'tc3k_profile_v1';
+const PEERJS_URLS = [
+  'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js',
+  'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'
+];
+// Публичный брокер PeerJS нужен только для «рукопожатия», игра идёт напрямую между устройствами.
+const PEER_OPTS = {
+  host: '0.peerjs.com', port: 443, path: '/', secure: true, debug: 0,
+  config: {iceServers: [
+    {urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']},
+    {urls: 'stun:stun.cloudflare.com:3478'},
+    {urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp'}
+  ]}
+};
+
+// ================= Утилиты =================
+const $ = (s, r = document) => r.querySelector(s);
+const fmt = n => Math.round(n).toLocaleString('ru-RU');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sumBets = b => Object.values(b).reduce((s, v) => s + v, 0);
+const signed = n => (n >= 0 ? '+' : '−') + fmt(Math.abs(n));
+
+function rnd6() {
+  const a = new Uint8Array(1);
+  do crypto.getRandomValues(a); while (a[0] >= 252);
+  return a[0] % 6 + 1;
+}
+function genCode() {
+  const a = new Uint8Array(5); crypto.getRandomValues(a);
+  return [...a].map(x => CODE_ABC[x % CODE_ABC.length]).join('');
+}
+function dayKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function toast(msg, kind = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind; el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.classList.add('hide'), 2800);
+  setTimeout(() => el.remove(), 3200);
+}
+function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+function isNarrow() { return window.matchMedia('(max-width:899px)').matches; }
+
+// ================= Профиль =================
+let memProfile = null;
+function loadProfile() {
+  try {
+    const p = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (p && typeof p.name === 'string' && Number.isFinite(p.balance)) return p;
+  } catch (e) { return memProfile; }
+  return null;
+}
+function saveProfile() {
+  memProfile = profile;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(profile)); } catch (e) {}
+}
+let profile = loadProfile();
+
+function cleanName(s) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, 16); }
+
+// ================= Ежедневный бонус =================
+function dailyStatus() {
+  const today = dayKey(new Date());
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if (profile.lastClaim === today) return {canClaim: false, next: profile.streak % 7 + 1};
+  const day = profile.lastClaim === dayKey(y) ? profile.streak % 7 + 1 : 1;
+  return {canClaim: true, day};
+}
+function renderDaily() {
+  const st = dailyStatus();
+  $('#dailyGrid').innerHTML = DAILY.map((amt, i) => {
+    const d = i + 1; let cls = '';
+    if (st.canClaim) { if (d < st.day) cls = 'done'; else if (d === st.day) cls = 'today'; }
+    else { if (d <= profile.streak) cls = 'done'; if (d === st.next && profile.streak !== 7) cls += ' next'; }
+    return `<div class="dtile ${cls}"><div class="dd">День ${d}</div><div class="da">${fmt(amt)}</div><div class="dc">${cls.includes('done') ? '✓' : '🪙'}</div></div>`;
+  }).join('');
+  $('#dailyText').textContent = st.canClaim
+    ? `Сегодня — день ${st.day}: +${fmt(DAILY[st.day - 1])} фишек. Пропуск дня сбрасывает серию.`
+    : `Бонус за сегодня получен. Завтра — день ${st.next}: +${fmt(DAILY[st.next - 1])} фишек.`;
+  $('#btnClaim').disabled = !st.canClaim;
+  $('#btnClaim').textContent = st.canClaim ? `Забрать ${fmt(DAILY[st.day - 1])}` : 'Приходите завтра';
+}
+function claimDaily() {
+  const st = dailyStatus();
+  if (!st.canClaim) return;
+  const amt = DAILY[st.day - 1];
+  profile.balance += amt; profile.streak = st.day; profile.lastClaim = dayKey(new Date());
+  saveProfile(); sfxWin(); vibrate(30);
+  toast(`+${fmt(amt)} фишек — бонус дня ${st.day}`, 'ok');
+  renderDaily(); renderMenu();
+}
+
+// ================= Правила игры =================
+// Число выигрывает, если выпало на кубике, равно сумме любой пары или сумме всех трёх.
+function evaluateRoll(dice) {
+  const [a, b, c] = dice;
+  const wins = new Map();
+  const add = (n, why) => {
+    if (n < 1 || n > 18) return;
+    if (!wins.has(n)) wins.set(n, []);
+    if (!wins.get(n).includes(why)) wins.get(n).push(why);
+  };
+  dice.forEach(v => add(v, 'куб'));
+  add(a + b, `${a}+${b}`); add(a + c, `${a}+${c}`); add(b + c, `${b}+${c}`);
+  const total = a + b + c;
+  add(total, 'Σ');
+  return {wins, total, triple: a === b && b === c};
+}
+function cellWins(cell, ev) { return cell === '3x' ? ev.triple : ev.wins.has(+cell); }
+function settle(bets, ev) {
+  let payout = 0; const winCells = [];
+  for (const [cell, amt] of Object.entries(bets)) {
+    if (cellWins(cell, ev)) { payout += amt * 2; winCells.push(cell); }
+  }
+  return {payout, winCells};
+}
+function cleanBets(b) {
+  const out = {};
+  if (!b || typeof b !== 'object') return out;
+  for (const c of CELLS) {
+    const v = Math.floor(Number(b[c]));
+    if (Number.isFinite(v) && v > 0) out[c] = v;
+  }
+  return out;
+}
+function validateBets(b, balance) {
+  const keys = Object.keys(b), n = keys.length;
+  if (!n) return null;
+  if (n > MAX_CELLS) return 'Ставить можно максимум на 3 клетки';
+  const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
+  if (keys.some(k => b[k] > cap)) {
+    return n === 1 ? `На одну клетку максимум ${fmt(LIMIT_SINGLE)}` : `При ставке на 2–3 клетки максимум ${fmt(LIMIT_MULTI)} на каждую`;
+  }
+  if (sumBets(b) > balance) return 'Недостаточно фишек';
+  return null;
+}
+
+// ================= Звук =================
+let actx = null, noiseBuf = null;
+function audio() {
+  try {
+    if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; actx = new C(); }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  } catch (e) { return null; }
+}
+function beep(freq, dur, {type = 'sine', vol = .12, at = 0, slide = 0} = {}) {
+  if (!profile || !profile.sound) return;
+  const a = audio(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+function clack(at, vol) {
+  if (!profile || !profile.sound) return;
+  const a = audio(); if (!a) return;
+  if (!noiseBuf) {
+    noiseBuf = a.createBuffer(1, Math.floor(a.sampleRate * .05), a.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+  }
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = 1600 + Math.random() * 2000; f.Q.value = 2.5;
+  g.gain.value = vol;
+  s.connect(f).connect(g).connect(a.destination); s.start(a.currentTime + at);
+}
+function sfxRoll() { let t = 0, gap = .05; clack(0, .3); for (let i = 0; i < 14; i++) { t += gap; gap *= 1.13; clack(t, .4 * (1 - i / 16)); } }
+function sfxChip() { beep(2200, .05, {type:'triangle', vol:.06}); beep(3100, .04, {type:'triangle', vol:.04, at:.025}); }
+function sfxWin() { [523, 659, 784, 1047].forEach((f, i) => beep(f, .2, {type:'triangle', vol:.1, at:i * .09})); }
+function sfxLose() { beep(240, .4, {type:'sawtooth', vol:.04, slide:.6}); }
+
+// ================= Кубики (3D) =================
+const PIPS = {1:[5], 2:[3,7], 3:[3,5,7], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9]};
+const FACE_ROT = {1:[0,0], 2:[0,-90], 3:[-90,0], 4:[90,0], 5:[0,90], 6:[0,180]};
+const diceEls = [], spins = [];
+function buildDice() {
+  const row = $('#diceRow');
+  for (let i = 0; i < 3; i++) {
+    const slot = document.createElement('div'); slot.className = 'die-slot';
+    slot.innerHTML = '<div class="die-shadow"></div><div class="die-wrap"><div class="die"></div></div>';
+    const die = slot.querySelector('.die');
+    for (let v = 1; v <= 6; v++) {
+      const f = document.createElement('div'); f.className = 'face f' + v;
+      PIPS[v].forEach(idx => {
+        const p = document.createElement('span');
+        p.className = 'pip' + (v === 1 ? ' red' : '');
+        p.style.gridArea = `${Math.floor((idx - 1) / 3) + 1} / ${(idx - 1) % 3 + 1}`;
+        f.appendChild(p);
+      });
+      die.appendChild(f);
+    }
+    row.appendChild(slot);
+    diceEls.push({slot, die}); spins.push({x:0, y:0, z:0});
+    setDie(i, i + 1, false);
+  }
+}
+function setDie(i, v, spin) {
+  const {die} = diceEls[i], s = spins[i], [bx, by] = FACE_ROT[v];
+  if (spin) {
+    s.x += 2 + Math.floor(Math.random() * 2);
+    s.y += 2 + Math.floor(Math.random() * 2);
+    s.z += 1 + Math.floor(Math.random() * 2);
+  } else die.style.transition = 'none';
+  die.style.transform = `rotateX(${bx + 360 * s.x}deg) rotateY(${by + 360 * s.y}deg) rotateZ(${360 * s.z}deg)`;
+  if (!spin) { void die.offsetWidth; die.style.transition = ''; }
+}
+function animateRoll(values) {
+  sfxRoll(); vibrate([20, 60, 20]);
+  values.forEach((v, i) => {
+    const {slot} = diceEls[i];
+    slot.classList.remove('tossing'); void slot.offsetWidth; slot.classList.add('tossing');
+    setDie(i, v, true);
+  });
+}
+
+// ================= Состояние клиента =================
+const S = {
+  role: null,          // 'dealer' | 'host' | 'client'
+  myId: null, code: null,
+  view: null,          // последнее состояние комнаты от хоста
+  myBets: {}, stack: [], lastBets: null, chip: 100,
+  submitting: false, animating: false, frozenBalance: 0,
+  lastRoll: null, localDeadline: 0, autoSubmitted: false,
+  unread: 0, session: 0, dailyShown: false
+};
+let room = null;   // экземпляр Room, если мы хост или играем с дилером
+let net = {peer: null, conn: null, lastSeen: 0, hb: null};
+
+function me() { return S.view ? S.view.players.find(p => p.id === S.myId) : null; }
+function myBalance() {
+  if (S.animating) return S.frozenBalance;
+  const m = me(); return m ? m.balance : profile.balance;
+}
+function bettingOpen() { return !!S.view && S.view.phase === 'betting' && !S.animating; }
+function isLocked() { const m = me(); return !bettingOpen() || S.submitting || !!(m && m.ready); }
+
+// ================= Комната (логика хоста / дилера) =================
+class Room {
+  constructor(mode) {
+    this.mode = mode;                // 'dealer' | 'online'
+    this.players = new Map();
+    this.phase = 'betting'; this.round = 1; this.history = [];
+    this.deadline = 0; this.timer = null; this.hb = null;
+    this.code = null; this.peer = null; this.destroyed = false;
+  }
+  addPlayer(id, name, balance, conn) {
+    const used = new Set([...this.players.values()].map(p => p.color));
+    const p = {id, name, balance, conn, ready: false, bets: {}, host: id === 'host',
+      color: PLAYER_COLORS.find(c => !used.has(c)) || '#fff', lastSeen: Date.now()};
+    this.players.set(id, p);
+    return p;
+  }
+  removePlayer(id) {
+    const p = this.players.get(id);
+    if (!p || p.host) return;
+    this.players.delete(id);
+    try { p.conn && p.conn.close(); } catch (e) {}
+    this.sys(`${p.name} вышел из комнаты`);
+    if (this.players.size < 2) this.clearTimer();
+    this.broadcastState();
+    this.checkAllReady();
+  }
+  accept(conn) {
+    let pid = null;
+    conn.on('data', msg => {
+      if (this.destroyed || !msg || typeof msg !== 'object') return;
+      if (!pid) {
+        if (msg.t !== 'hello') return;
+        if (this.players.size >= MAX_PLAYERS) { try { conn.send({t:'full'}); } catch (e) {} setTimeout(() => conn.close(), 400); return; }
+        pid = conn.peer;
+        const bal = Math.floor(Number(msg.balance));
+        const p = this.addPlayer(pid, cleanName(msg.name) || 'Игрок', Number.isFinite(bal) && bal >= 0 ? Math.min(bal, 1e9) : START_BALANCE, conn);
+        conn.send({t:'welcome', id: pid});
+        this.broadcastState();
+        this.sys(`${p.name} присоединился`);
+        return;
+      }
+      this.handle(pid, msg);
+    });
+    conn.on('close', () => { if (pid) this.removePlayer(pid); });
+    conn.on('error', () => { if (pid) this.removePlayer(pid); });
+  }
+  publicState() {
+    return {
+      t: 'state', mode: this.mode, phase: this.phase, round: this.round, code: this.code,
+      timeLeft: this.deadline ? Math.max(0, this.deadline - Date.now()) : 0,
+      history: this.history,
+      players: [...this.players.values()].map(p => ({id: p.id, name: p.name, balance: p.balance,
+        ready: p.ready, bets: p.ready ? p.bets : {}, color: p.color, host: p.host}))
+    };
+  }
+  sendTo(id, msg) {
+    const p = this.players.get(id);
+    if (!p) return;
+    if (!p.conn) { const copy = JSON.parse(JSON.stringify(msg)); setTimeout(() => onServerMsg(copy), 0); return; }
+    try { if (p.conn.open) p.conn.send(msg); } catch (e) {}
+  }
+  broadcast(msg) { for (const id of this.players.keys()) this.sendTo(id, msg); }
+  broadcastState() { if (!this.destroyed) this.broadcast(this.publicState()); }
+  sys(text) { this.broadcast({t:'chat', sys:true, text}); }
+  clearTimer() { clearTimeout(this.timer); this.timer = null; this.deadline = 0; }
+  handle(id, msg) {
+    const p = this.players.get(id);
+    if (!p || this.destroyed) return;
+    p.lastSeen = Date.now();
+    switch (msg.t) {
+      case 'bets': {
+        if (this.phase !== 'betting') return this.sendTo(id, {t:'error', msg:'Ставки на этот раунд закрыты'});
+        const bets = cleanBets(msg.bets);
+        const err = validateBets(bets, p.balance);
+        if (err) return this.sendTo(id, {t:'error', msg: err});
+        p.bets = bets; p.ready = true;
+        const all = [...this.players.values()].every(q => q.ready);
+        if (this.mode === 'online' && !all && !this.timer && this.players.size > 1) {
+          this.deadline = Date.now() + BET_TIMER_S * 1000;
+          this.timer = setTimeout(() => this.roll(), BET_TIMER_S * 1000);
+        }
+        this.broadcastState();
+        this.checkAllReady();
+        break;
+      }
+      case 'unready':
+        if (this.phase === 'betting' && p.ready) { p.ready = false; p.bets = {}; this.broadcastState(); }
+        break;
+      case 'chat': {
+        const text = String(msg.text || '').trim().slice(0, 200);
+        if (text) this.broadcast({t:'chat', from: p.name, color: p.color, text});
+        break;
+      }
+      case 'force':
+        if (p.host && this.phase === 'betting' && [...this.players.values()].some(q => q.ready)) this.roll();
+        break;
+    }
+  }
+  checkAllReady() {
+    if (this.phase !== 'betting' || !this.players.size) return;
+    if ([...this.players.values()].every(p => p.ready)) this.roll();
+  }
+  roll() {
+    if (this.destroyed || this.phase !== 'betting') return;
+    this.clearTimer();
+    this.phase = 'rolling';
+    const dice = [rnd6(), rnd6(), rnd6()];
+    const ev = evaluateRoll(dice);
+    const results = {};
+    for (const p of this.players.values()) {
+      let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, winCells = [];
+      if (staked > 0 && staked <= p.balance) {
+        p.balance -= staked;
+        ({payout, winCells} = settle(p.bets, ev));
+        p.balance += payout;
+      } else staked = 0;
+      results[p.id] = {bets: staked ? p.bets : {}, staked, payout, winCells, balance: p.balance};
+      p.ready = false; p.bets = {};
+    }
+    const self = this.players.get('host');
+    if (self) { profile.balance = self.balance; saveProfile(); }
+    this.history.unshift(dice);
+    if (this.history.length > 12) this.history.length = 12;
+    this.broadcast({t:'roll', dice, round: this.round, results});
+    this.round++;
+    setTimeout(() => {
+      if (this.destroyed) return;
+      this.phase = 'betting';
+      this.broadcastState();
+    }, ROLL_MS + 500);
+  }
+  startHeartbeat() {
+    this.hb = setInterval(() => {
+      const now = Date.now();
+      for (const p of [...this.players.values()]) {
+        if (!p.conn) continue;
+        if (now - p.lastSeen > HB_TIMEOUT) { this.removePlayer(p.id); continue; }
+        try { p.conn.open && p.conn.send({t:'ping'}); } catch (e) {}
+      }
+    }, 4000);
+  }
+  destroy() {
+    this.destroyed = true;
+    clearInterval(this.hb); this.clearTimer();
+    for (const p of this.players.values()) {
+      if (!p.conn) continue;
+      try { p.conn.send({t:'closed'}); } catch (e) {}
+    }
+    const peer = this.peer;
+    if (peer) setTimeout(() => { try { peer.destroy(); } catch (e) {} }, 300);
+  }
+}
+
+// ================= Сеть: общие функции =================
+let peerLoading = null;
+function loadPeer() {
+  if (window.Peer || (window.peerjs && window.peerjs.Peer)) return Promise.resolve();
+  if (peerLoading) return peerLoading;
+  peerLoading = new Promise((resolve, reject) => {
+    let i = 0;
+    const next = () => {
+      if (i >= PEERJS_URLS.length) { peerLoading = null; return reject(new Error('peerjs')); }
+      const s = document.createElement('script');
+      s.src = PEERJS_URLS[i++];
+      s.onload = () => (window.Peer || (window.peerjs && window.peerjs.Peer)) ? resolve() : next();
+      s.onerror = () => { s.remove(); next(); };
+      document.head.appendChild(s);
+    };
+    next();
+  });
+  return peerLoading;
+}
+function PeerCtor() { return window.Peer || window.peerjs.Peer; }
+function peerErrText(err) {
+  switch (err && err.type) {
+    case 'peer-unavailable': return 'Комната не найдена. Проверьте код — хост должен держать игру открытой.';
+    case 'browser-incompatible': return 'Этот браузер не поддерживает прямое соединение (WebRTC).';
+    case 'unavailable-id': return 'Не удалось создать комнату, попробуйте ещё раз.';
+    case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
+      return 'Нет связи с сервером соединения. Проверьте интернет.';
+    default: return 'Ошибка сети' + (err && err.type ? ': ' + err.type : '');
+  }
+}
+function sendToHost(msg) {
+  if (room) room.handle(S.myId, msg);
+  else if (net.conn && net.conn.open) { try { net.conn.send(msg); } catch (e) {} }
+}
+
+function onServerMsg(msg) {
+  if (!msg || !msg.t || !S.role) return;
+  net.lastSeen = Date.now();
+  switch (msg.t) {
+    case 'ping': sendToHost({t:'pong'}); break;
+    case 'welcome': S.myId = msg.id; break;
+    case 'state': applyState(msg); break;
+    case 'roll': onRoll(msg); break;
+    case 'chat': addChat(msg); break;
+    case 'error': S.submitting = false; S.autoSubmitted = false; toast(msg.msg, 'err'); render(); break;
+    case 'full': toast('Комната заполнена (максимум 4 игрока)', 'err'); leaveGame(); break;
+    case 'closed': toast('Хост закрыл комнату', 'err'); leaveGame(); break;
+  }
+}
+
+// ================= Создание комнаты / подключение =================
+async function createRoom() {
+  const btn = $('#btnDoCreate');
+  const fail = text => { btn.disabled = false; btn.textContent = 'Создать комнату'; toast(text, 'err'); };
+  btn.disabled = true; btn.textContent = 'Подключение…';
+  try { await loadPeer(); } catch (e) { return fail('Не удалось загрузить сетевой модуль. Нужен интернет.'); }
+  let attempts = 0;
+  const tryOpen = () => {
+    const code = genCode();
+    const Peer = PeerCtor();
+    const peer = new Peer(PEER_PREFIX + code, PEER_OPTS);
+    let opened = false;
+    const to = setTimeout(() => { if (!opened) { try { peer.destroy(); } catch (e) {} fail('Сервер соединения не отвечает. Проверьте интернет.'); } }, 15000);
+    peer.on('open', () => {
+      opened = true; clearTimeout(to);
+      btn.disabled = false; btn.textContent = 'Создать комнату';
+      closeModal('modalCreate');
+      room = new Room('online');
+      room.code = code; room.peer = peer;
+      room.addPlayer('host', profile.name, profile.balance, null);
+      room.startHeartbeat();
+      net.peer = peer;
+      S.role = 'host'; S.myId = 'host'; S.code = code;
+      enterGame();
+      room.broadcastState();
+      room.sys(`Комната ${code} создана. Отправьте код друзьям — до 3 игроков.`);
+      showCodeModal();
+    });
+    peer.on('connection', conn => { if (room && room.peer === peer) room.accept(conn); else conn.close(); });
+    peer.on('disconnected', () => {
+      if (room && room.peer === peer && !peer.destroyed) setTimeout(() => { try { !peer.destroyed && peer.reconnect(); } catch (e) {} }, 1500);
+    });
+    peer.on('error', err => {
+      if (opened) return console.warn('peer', err);
+      clearTimeout(to); try { peer.destroy(); } catch (e) {}
+      if (err.type === 'unavailable-id' && attempts++ < 3) return tryOpen();
+      fail(peerErrText(err));
+    });
+  };
+  tryOpen();
+}
+
+async function joinRoom(raw) {
+  const code = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length < 4) return toast('Введите код комнаты', 'err');
+  const btn = $('#btnDoJoin');
+  const fail = text => { btn.disabled = false; btn.textContent = 'Подключиться'; toast(text, 'err'); };
+  btn.disabled = true; btn.textContent = 'Подключение…';
+  try { await loadPeer(); } catch (e) { return fail('Не удалось загрузить сетевой модуль. Нужен интернет.'); }
+  const Peer = PeerCtor();
+  const peer = new Peer(PEER_OPTS);
+  let done = false;
+  const abort = text => {
+    if (done) return; done = true; clearTimeout(to);
+    try { peer.destroy(); } catch (e) {}
+    if (net.peer === peer) net = {peer: null, conn: null, lastSeen: 0, hb: null};
+    fail(text);
+  };
+  const to = setTimeout(() => abort('Не удалось подключиться. Проверьте код и интернет.'), 20000);
+  net.peer = peer;
+  peer.on('open', () => {
+    const conn = peer.connect(PEER_PREFIX + code, {reliable: true, serialization: 'json'});
+    net.conn = conn;
+    conn.on('open', () => conn.send({t:'hello', name: profile.name, balance: profile.balance}));
+    conn.on('data', msg => {
+      if (!msg || typeof msg !== 'object') return;
+      if (!done) {
+        if (msg.t === 'full') return abort('Комната заполнена (максимум 4 игрока)');
+        if (msg.t !== 'welcome') return;
+        done = true; clearTimeout(to);
+        btn.disabled = false; btn.textContent = 'Подключиться';
+        closeModal('modalJoin');
+        S.role = 'client'; S.myId = msg.id; S.code = code;
+        net.lastSeen = Date.now();
+        net.hb = setInterval(() => {
+          if (S.role === 'client' && Date.now() - net.lastSeen > HB_TIMEOUT) { toast('Связь с хостом потеряна', 'err'); leaveGame(); }
+        }, 3000);
+        return;
+      }
+      onServerMsg(msg);
+    });
+    conn.on('close', () => { if (S.role === 'client' && net.conn === conn) { toast('Соединение с хостом закрыто', 'err'); leaveGame(); } });
+  });
+  peer.on('error', err => {
+    if (!done) return abort(peerErrText(err));
+    console.warn('peer', err);
+  });
+}
+
+function startDealer() {
+  room = new Room('dealer');
+  room.addPlayer('host', profile.name, profile.balance, null);
+  S.role = 'dealer'; S.myId = 'host'; S.code = null;
+  enterGame();
+  room.broadcastState();
+}
+
+function leaveGame() {
+  const r = room; room = null;
+  S.role = null;
+  if (r) r.destroy();
+  if (net.conn) { try { net.conn.close(); } catch (e) {} }
+  if (net.peer && !(r && r.peer === net.peer)) { try { net.peer.destroy(); } catch (e) {} }
+  clearInterval(net.hb);
+  net = {peer: null, conn: null, lastSeen: 0, hb: null};
+  Object.assign(S, {myId: null, code: null, view: null, myBets: {}, stack: [], lastBets: null,
+    submitting: false, animating: false, lastRoll: null, localDeadline: 0, autoSubmitted: false, unread: 0});
+  S.session++;
+  releaseWake(); closeSide();
+  goMenu();
+}
+
+// ================= Обработка сообщений от хоста =================
+function applyState(msg) {
+  const first = !S.view;
+  S.view = msg;
+  S.submitting = false;
+  if (msg.timeLeft > 0) S.localDeadline = Date.now() + msg.timeLeft;
+  else { S.localDeadline = 0; S.autoSubmitted = false; }
+  const m = me();
+  if (m && !S.animating && profile.balance !== m.balance) { profile.balance = m.balance; saveProfile(); }
+  if (first && !$('#screen-game').classList.contains('active')) enterGame();
+  render();
+}
+
+function onRoll(msg) {
+  if (!S.view) return;
+  const session = S.session;
+  const m = me();
+  S.frozenBalance = m ? m.balance : profile.balance;
+  S.animating = true; S.submitting = false; S.localDeadline = 0; S.autoSubmitted = false;
+  S.view.phase = 'rolling';
+  const res = msg.results[S.myId];
+  if (res && res.staked > 0) { S.lastBets = {...res.bets}; S.myBets = {}; S.stack = []; }
+  if (res) { profile.balance = res.balance; saveProfile(); }
+  S.lastRoll = null;
+  animateRoll(msg.dice);
+  render();
+  setTimeout(() => {
+    if (session !== S.session || !S.view) return;
+    S.animating = false;
+    const ev = evaluateRoll(msg.dice);
+    S.lastRoll = {dice: msg.dice, ev, res};
+    S.view.players.forEach(p => {
+      const r = msg.results[p.id];
+      if (r) p.balance = r.balance;
+      p.ready = false; p.bets = {};
+    });
+    S.view.history = [msg.dice, ...(S.view.history || []).filter(d => d !== msg.dice)].slice(0, 12);
+    if (res && res.staked > 0) {
+      if (res.payout > 0) { sfxWin(); vibrate([40, 40, 80]); } else sfxLose();
+    }
+    if (S.role !== 'dealer') {
+      const parts = [];
+      for (const p of S.view.players) {
+        const r = msg.results[p.id];
+        if (r && r.staked > 0) parts.push(`${p.name} ${signed(r.payout - r.staked)}`);
+      }
+      addChat({sys: true, text: `Раунд ${msg.round}: ${msg.dice.join(' · ')} = ${ev.total}${ev.triple ? ' (трипл!)' : ''}${parts.length ? ' — ' + parts.join(', ') : ''}`});
+    }
+    render();
+  }, ROLL_MS);
+}
+
+// ================= Действия игрока =================
+function placeChip(cell) {
+  audio();
+  if (isLocked()) {
+    const m = me();
+    if (m && m.ready && bettingOpen()) toast('Ставки приняты. Нажмите «Изменить ставки», чтобы поменять');
+    return;
+  }
+  const cur = S.myBets[cell] || 0;
+  const cells = Object.keys(S.myBets);
+  const n = cells.length + (cur ? 0 : 1);
+  if (n > MAX_CELLS) return toast('Ставить можно максимум на 3 клетки', 'err');
+  if (n > 1 && cells.some(k => S.myBets[k] > LIMIT_MULTI)) {
+    return toast(`При ставке на 2–3 клетки — не больше ${fmt(LIMIT_MULTI)} на каждую. Уменьшите ставку.`, 'err');
+  }
+  const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
+  const free = myBalance() - sumBets(S.myBets);
+  const add = Math.min(S.chip, cap - cur, free);
+  if (add <= 0) return toast(free <= 0 ? 'Недостаточно фишек' : `Лимит клетки — ${fmt(cap)}`, 'err');
+  S.myBets[cell] = cur + add;
+  S.stack.push({cell, add});
+  sfxChip();
+  render();
+}
+function removeCell(cell) {
+  if (isLocked() || !S.myBets[cell]) return;
+  delete S.myBets[cell];
+  S.stack = S.stack.filter(x => x.cell !== cell);
+  sfxChip(); render();
+}
+function undo() {
+  if (isLocked()) return;
+  const last = S.stack.pop(); if (!last) return;
+  S.myBets[last.cell] -= last.add;
+  if (S.myBets[last.cell] <= 0) delete S.myBets[last.cell];
+  render();
+}
+function clearBets() { if (isLocked()) return; S.myBets = {}; S.stack = []; render(); }
+function repeatBets() {
+  if (isLocked() || !S.lastBets) return;
+  const cand = {...S.lastBets};
+  const err = validateBets(cand, myBalance());
+  if (err) return toast(err, 'err');
+  S.myBets = cand;
+  S.stack = Object.entries(cand).map(([cell, add]) => ({cell, add}));
+  sfxChip(); render();
+}
+function submitBets() {
+  const err = validateBets(S.myBets, myBalance());
+  if (err) { toast(err, 'err'); return false; }
+  S.submitting = true;
+  sendToHost({t:'bets', bets: {...S.myBets}});
+  render();
+  return true;
+}
+function onMain() {
+  audio();
+  if (!bettingOpen() || S.submitting) return;
+  const m = me(), total = sumBets(S.myBets);
+  if (m && m.ready) { sendToHost({t:'unready'}); return; }
+  if (!total && (S.role === 'dealer' || S.view.players.length === 1)) return toast('Сначала сделайте ставку');
+  submitBets();
+}
+function tick() {
+  if (!S.view || !$('#screen-game').classList.contains('active')) return;
+  renderStatus();
+  // Если таймер вот-вот выйдет, а ставки не отправлены — отправляем автоматически
+  const m = me();
+  if (S.localDeadline && bettingOpen() && m && !m.ready && !S.submitting && !S.autoSubmitted
+      && sumBets(S.myBets) > 0 && S.localDeadline - Date.now() <= 2000) {
+    S.autoSubmitted = true;
+    submitBets();
+  }
+}
+
+// ================= Отрисовка =================
+const cellEls = {};
+function buildBoard() {
+  const b = $('#board');
+  CELLS.forEach(c => {
+    const el = document.createElement('button');
+    el.className = 'cell' + (c === '3x' ? ' triple' : '');
+    el.dataset.cell = c;
+    el.innerHTML = (c === '3x'
+      ? '<span class="lbl">3х</span><span class="sub">три одинаковых</span>'
+      : `<span class="num ${+c % 2 ? 'red' : 'black'}">${c}</span>`)
+      + '<span class="why"></span><span class="marks"></span><span class="stake"></span>';
+    b.appendChild(el);
+    cellEls[c] = el;
+  });
+}
+function buildChips() {
+  $('#chips').innerHTML = CHIPS.map(ch =>
+    `<button class="chip" data-v="${ch.v}" style="--c:${ch.c}">${ch.v >= 1000 ? ch.v / 1000 + 'K' : ch.v}</button>`).join('');
+}
+function renderChips() {
+  document.querySelectorAll('.chip').forEach(b => b.classList.toggle('sel', +b.dataset.v === S.chip));
+}
+function render() {
+  if (!S.view) return;
+  renderTopbar(); renderBoard(); renderBetInfo(); renderActions(); renderStatus(); renderRollInfo();
+  if (!S.animating) { renderPlayers(); renderHistory(); }
+}
+function renderTopbar() {
+  const v = S.view;
+  $('#bal').textContent = fmt(myBalance());
+  if (S.role === 'dealer') {
+    $('#tbMode').textContent = 'Игра с дилером';
+    $('#tbSub').textContent = `Раунд ${v.round}`;
+  } else {
+    $('#tbMode').textContent = S.role === 'host' ? 'Вы хост' : 'Онлайн';
+    $('#tbSub').textContent = `Игроков ${v.players.length}/${MAX_PLAYERS} · раунд ${v.round}`;
+  }
+  const pill = $('#btnCode');
+  pill.hidden = !S.code;
+  pill.textContent = S.code ? S.code : '';
+  $('#btnSound').textContent = profile.sound ? '🔊' : '🔇';
+  const badge = $('#chatBadge');
+  badge.hidden = !S.unread; badge.textContent = S.unread > 9 ? '9+' : S.unread;
+}
+function renderBoard() {
+  const v = S.view, lr = S.lastRoll, locked = isLocked();
+  $('#board').classList.toggle('locked', locked);
+  for (const c of CELLS) {
+    const el = cellEls[c], amt = S.myBets[c] || 0;
+    el.classList.toggle('has', amt > 0);
+    el.querySelector('.stake').textContent = amt ? fmt(amt) : '';
+    el.querySelector('.marks').innerHTML = v.players
+      .filter(p => p.id !== S.myId && p.ready && p.bets[c])
+      .map(p => `<i style="background:${p.color}" title="${esc(p.name)}: ${fmt(p.bets[c])}"></i>`).join('');
+    const hit = !!lr && cellWins(c, lr.ev);
+    const myLast = lr && lr.res && lr.res.bets ? lr.res.bets[c] : 0;
+    el.classList.toggle('hit', hit);
+    el.classList.toggle('won', hit && !!myLast);
+    el.classList.toggle('lost', !hit && !!myLast);
+    el.querySelector('.why').textContent = hit && c !== '3x' ? lr.ev.wins.get(+c).join(' ') : '';
+  }
+}
+function renderBetInfo() {
+  const total = sumBets(S.myBets), n = Object.keys(S.myBets).length;
+  $('#betInfo').innerHTML = total
+    ? `Ставка: <b>${fmt(total)}</b> · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`
+    : 'Выберите фишку и нажмите на клетку';
+  $('#limitInfo').textContent = n ? `клеток ${n}/3 · лимит ${fmt(n === 1 ? LIMIT_SINGLE : LIMIT_MULTI)} на клетку` : '1 клетка до 10 000 · 2–3 клетки до 2 000';
+}
+function renderActions() {
+  const m = me(), open = bettingOpen(), locked = isLocked();
+  const total = sumBets(S.myBets), solo = S.view.players.length === 1;
+  $('#btnUndo').disabled = locked || !S.stack.length;
+  $('#btnClear').disabled = locked || !total;
+  $('#btnRepeat').disabled = locked || !S.lastBets;
+  const main = $('#btnMain');
+  main.classList.add('gold');
+  if (S.role === 'dealer' || solo) {
+    main.textContent = S.animating ? '🎲 Бросок…' : '🎲 Бросить';
+    main.disabled = !open || S.submitting || !total || (m && m.ready);
+  } else if (m && m.ready) {
+    main.textContent = '✎ Изменить ставки';
+    main.classList.remove('gold');
+    main.disabled = !open;
+  } else {
+    main.textContent = total ? '✓ Готов' : '⏭ Пропустить раунд';
+    main.disabled = !open || S.submitting;
+  }
+  const force = $('#btnForce');
+  force.hidden = !(S.role === 'host' && !solo);
+  force.disabled = !open || !S.view.players.some(p => p.ready);
+}
+function renderStatus() {
+  const el = $('#status'), v = S.view;
+  if (!v) return;
+  const m = me();
+  let t, urgent = false;
+  if (S.animating) t = '🎲 Кубики катятся…';
+  else if (v.phase !== 'betting') t = 'Подсчёт…';
+  else if (S.role === 'dealer' || v.players.length === 1) {
+    t = sumBets(S.myBets) ? 'Нажмите «Бросить», когда будете готовы'
+      : myBalance() < CHIPS[0].v ? 'Фишки закончились — заберите бонус дня в меню' : 'Делайте ставки';
+    if (S.role === 'host') t += ' · ждём друзей по коду ' + S.code;
+  } else {
+    const rc = v.players.filter(p => p.ready).length;
+    t = m && m.ready ? `Ставки приняты ✓ · готовы ${rc}/${v.players.length}` : `Сделайте ставки и нажмите «Готов» · готовы ${rc}/${v.players.length}`;
+    const left = S.localDeadline - Date.now();
+    if (S.localDeadline && left > 0) { t += ` · бросок через ${Math.ceil(left / 1000)} с`; urgent = left <= 5000 && !(m && m.ready); }
+  }
+  el.textContent = t;
+  el.classList.toggle('urgent', urgent);
+}
+function renderRollInfo() {
+  const el = $('#rollInfo');
+  if (S.animating) { el.innerHTML = '<div class="ri-main rolling">Бросаем кубики…</div>'; return; }
+  if (!S.lastRoll) { el.innerHTML = '<div class="ri-main muted">Сделайте ставки — и бросайте кубики</div>'; return; }
+  const {dice, ev, res} = S.lastRoll, [a, b, c] = dice;
+  let h = `<div class="ri-main"><span class="dv">${a}</span><span class="op">+</span><span class="dv">${b}</span><span class="op">+</span><span class="dv">${c}</span><span class="op">=</span><span class="tot">${ev.total}</span>${ev.triple ? '<span class="trip">ТРИПЛ · 3х</span>' : ''}</div>`;
+  h += `<div class="ri-sub">Пары: ${a}+${b}=<b>${a + b}</b> · ${a}+${c}=<b>${a + c}</b> · ${b}+${c}=<b>${b + c}</b></div>`;
+  const nums = [...ev.wins.keys()].sort((x, y) => x - y);
+  h += `<div class="ri-sub">Выигрывают: <b>${nums.join(', ')}${ev.triple ? ', 3х' : ''}</b></div>`;
+  if (res && res.staked > 0) {
+    h += res.payout > 0
+      ? `<div class="ri-res win">🎉 Выигрыш ${fmt(res.payout)} фишек (${signed(res.payout - res.staked)})</div>`
+      : `<div class="ri-res lose">Ставка ${fmt(res.staked)} не сыграла</div>`;
+  }
+  el.innerHTML = h;
+}
+function renderHistory() {
+  const hist = (S.view.history || []).slice(0, 10);
+  $('#history').innerHTML = hist.map(d =>
+    `<span class="${d[0] === d[1] && d[1] === d[2] ? 't' : ''}">${d.join('·')}<b>${d[0] + d[1] + d[2]}</b></span>`).join('');
+}
+function renderPlayers() {
+  const ps = S.view.players;
+  const tag = p => (p.host ? ' 👑' : '') + (p.id === S.myId ? ' (вы)' : '');
+  $('#players').innerHTML = ps.map(p => `<div class="pl ${p.ready ? 'ready' : ''}">
+      <i style="background:${p.color}"></i><span class="nm">${esc(p.name)}${tag(p)}</span>
+      <span class="pb">${fmt(p.balance)}</span><span class="ps">${p.ready ? '✓' : '…'}</span></div>`).join('');
+  $('#playersMini').innerHTML = ps.map(p => `<div class="pm ${p.ready ? 'ready' : ''}"><i style="background:${p.color}"></i>${esc(p.name)}${p.host ? ' 👑' : ''} · <b>${fmt(p.balance)}</b>${p.ready ? ' ✓' : ''}</div>`).join('');
+}
+function addChat(msg) {
+  const log = $('#chatLog');
+  const row = document.createElement('div');
+  row.className = 'chat-row' + (msg.sys ? ' sys' : '');
+  if (msg.sys) row.textContent = msg.text;
+  else {
+    const b = document.createElement('b');
+    b.style.color = msg.color || 'var(--gold)';
+    b.textContent = msg.from + ':';
+    row.appendChild(b);
+    row.appendChild(document.createTextNode(msg.text));
+  }
+  log.appendChild(row);
+  while (log.children.length > 200) log.firstChild.remove();
+  log.scrollTop = log.scrollHeight;
+  if (!msg.sys && isNarrow() && !$('#side').classList.contains('open')) {
+    S.unread++;
+    renderTopbar();
+  }
+}
+
+// ================= Экраны и модалки =================
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  window.scrollTo(0, 0);
+}
+function openModal(id) { $('#' + id).classList.add('open'); }
+function closeModal(id) { $('#' + id).classList.remove('open'); }
+function confirmDialog(text) {
+  return new Promise(resolve => {
+    $('#confirmText').textContent = text;
+    openModal('modalConfirm');
+    const done = v => { closeModal('modalConfirm'); $('#confirmYes').onclick = $('#confirmNo').onclick = null; resolve(v); };
+    $('#confirmYes').onclick = () => done(true);
+    $('#confirmNo').onclick = () => done(false);
+  });
+}
+function renderMenu() {
+  $('#menuName').textContent = profile.name;
+  $('#menuBal').textContent = fmt(profile.balance);
+  $('#dailyDot').hidden = !dailyStatus().canClaim;
+}
+function goMenu() {
+  show('screen-menu');
+  renderMenu();
+  if (!S.dailyShown && dailyStatus().canClaim) { S.dailyShown = true; renderDaily(); openModal('modalDaily'); }
+}
+function enterGame() {
+  $('#screen-game').classList.toggle('dealer', S.role === 'dealer');
+  $('#chatLog').innerHTML = '';
+  S.unread = 0; S.lastRoll = null;
+  show('screen-game');
+  renderChips();
+  if (S.role !== 'dealer') requestWake();
+  render();
+}
+function openSide() { $('#side').classList.add('open'); $('#backdrop').classList.add('open'); S.unread = 0; if (S.view) renderTopbar(); }
+function closeSide() { $('#side').classList.remove('open'); $('#backdrop').classList.remove('open'); }
+function showCodeModal() { $('#codeBig').textContent = S.code; $('#btnShareCode').hidden = !navigator.share; openModal('modalCode'); }
+function shareText() {
+  let t = `Заходи в «3 Кубика»! Код комнаты: ${S.code}`;
+  if (/^https?:/.test(location.protocol)) t += `\n${location.origin}${location.pathname}?room=${S.code}`;
+  return t;
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+    ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch (e) { return false; }
+}
+
+let wakeLock = null;
+async function requestWake() {
+  try { if ('wakeLock' in navigator && S.role && S.role !== 'dealer') wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+function releaseWake() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+// ================= Старт =================
+function init() {
+  buildDice(); buildBoard(); buildChips();
+
+  $('#btnRegister').onclick = () => {
+    const name = cleanName($('#regName').value);
+    if (!name) return toast('Введите имя', 'err');
+    profile = {name, balance: START_BALANCE, lastClaim: null, streak: 0, sound: true, created: Date.now()};
+    saveProfile();
+    toast(`Добро пожаловать! +${fmt(START_BALANCE)} фишек`, 'ok');
+    goMenu(); maybeJoinFromUrl();
+  };
+  $('#regName').onkeydown = e => { if (e.key === 'Enter') $('#btnRegister').click(); };
+
+  $('#btnDealer').onclick = () => { audio(); startDealer(); };
+  $('#btnCreate').onclick = () => openModal('modalCreate');
+  $('#btnDoCreate').onclick = () => { audio(); createRoom(); };
+  $('#btnJoin').onclick = () => { openModal('modalJoin'); setTimeout(() => $('#joinCode').focus(), 50); };
+  $('#btnDoJoin').onclick = () => { audio(); joinRoom($('#joinCode').value); };
+  $('#joinCode').onkeydown = e => { if (e.key === 'Enter') $('#btnDoJoin').click(); };
+  $('#btnDaily').onclick = () => { renderDaily(); openModal('modalDaily'); };
+  $('#btnClaim').onclick = claimDaily;
+  $('#btnRules').onclick = () => openModal('modalRules');
+  $('#btnRename').onclick = () => { $('#nameInput').value = profile.name; openModal('modalName'); };
+  $('#btnSaveName').onclick = () => {
+    const n = cleanName($('#nameInput').value);
+    if (!n) return toast('Введите имя', 'err');
+    profile.name = n; saveProfile(); renderMenu(); closeModal('modalName');
+  };
+
+  $('#btnBack').onclick = async () => {
+    if (S.role !== 'dealer' && !(await confirmDialog(S.role === 'host' ? 'Закрыть комнату для всех?' : 'Выйти из комнаты?'))) return;
+    leaveGame();
+  };
+  $('#btnSound').onclick = () => { profile.sound = !profile.sound; saveProfile(); renderTopbar(); };
+  $('#btnCode').onclick = showCodeModal;
+  $('#btnCopyCode').onclick = async () => toast(await copyText(shareText()) ? 'Скопировано' : 'Не удалось скопировать', 'ok');
+  $('#btnShareCode').onclick = () => { navigator.share && navigator.share({title: '3 Кубика', text: shareText()}).catch(() => {}); };
+  $('#btnChat').onclick = openSide;
+  $('#btnCloseSide').onclick = closeSide;
+  $('#backdrop').onclick = closeSide;
+  $('#chatForm').onsubmit = e => {
+    e.preventDefault();
+    const inp = $('#chatInput'), text = inp.value.trim();
+    if (!text) return;
+    sendToHost({t:'chat', text: text.slice(0, 200)});
+    inp.value = '';
+  };
+
+  const board = $('#board');
+  board.addEventListener('click', e => { const el = e.target.closest('.cell'); if (el) placeChip(el.dataset.cell); });
+  board.addEventListener('contextmenu', e => { const el = e.target.closest('.cell'); if (!el) return; e.preventDefault(); removeCell(el.dataset.cell); });
+  $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; S.chip = +b.dataset.v; sfxChip(); renderChips(); });
+  $('#btnUndo').onclick = undo;
+  $('#btnClear').onclick = clearBets;
+  $('#btnRepeat').onclick = repeatBets;
+  $('#btnMain').onclick = onMain;
+  $('#btnForce').onclick = () => sendToHost({t:'force'});
+
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', e => { if ((e.target === m && m.id !== 'modalConfirm') || e.target.closest('[data-close]')) m.classList.remove('open'); });
+  });
+  document.addEventListener('pointerdown', () => audio(), {once: true});
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.role && S.role !== 'dealer') requestWake(); });
+  window.addEventListener('beforeunload', () => { if (room && room.mode === 'online') room.destroy(); });
+
+  setInterval(tick, 250);
+
+  if (profile) { if (typeof profile.sound !== 'boolean') profile.sound = true; goMenu(); maybeJoinFromUrl(); }
+  else show('screen-register');
+
+  // Заранее подгружаем сетевой модуль, чтобы онлайн открывался быстрее
+  setTimeout(() => loadPeer().catch(() => {}), 1500);
+}
+function maybeJoinFromUrl() {
+  const code = new URLSearchParams(location.search).get('room');
+  if (!code) return;
+  $('#joinCode').value = code.toUpperCase();
+  closeModal('modalDaily');
+  openModal('modalJoin');
+}
+init();
+</script>
+</body>
+</html>
