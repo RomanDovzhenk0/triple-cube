@@ -526,14 +526,21 @@ const PEERJS_URLS = [
   'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js',
   'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'
 ];
+// Ретранслятор (TURN) — запасной путь, когда сеть не пускает прямое соединение (мобильный интернет, роутеры).
+const TURN_SERVERS = [];
+// ?relay в адресе принудительно гонит трафик через ретранслятор — для проверки, что он работает.
+const FORCE_RELAY = new URLSearchParams(location.search).has('relay');
 // Публичный брокер PeerJS нужен только для «рукопожатия», игра идёт напрямую между устройствами.
 const PEER_OPTS = {
   host: '0.peerjs.com', port: 443, path: '/', secure: true, debug: 0,
-  config: {iceServers: [
-    {urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']},
-    {urls: 'stun:stun.cloudflare.com:3478'},
-    {urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp'}
-  ]}
+  config: {
+    iceServers: [
+      {urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']},
+      {urls: 'stun:stun.cloudflare.com:3478'},
+      ...TURN_SERVERS
+    ],
+    iceTransportPolicy: FORCE_RELAY ? 'relay' : 'all'
+  }
 };
 
 // ================= Иконки =================
@@ -1086,17 +1093,34 @@ async function joinRoom(raw) {
     hideConnecting(); clearRoomParam();
     if (text) toast(text, 'err');
   };
-  showConnecting('Подключение к столу…', 'Соединяемся с хостом напрямую', () => abort());
+  // Этапы подключения — чтобы при сбое было видно, где именно застряли
+  const ICE_FAIL = 'Стол найден, но сеть не пропускает соединение с хостом. Попробуйте другую сеть (Wi-Fi или мобильный интернет).';
+  let stage = 'broker';
+  const setStage = (s, text) => { stage = s; $('#connText').textContent = text; };
+  showConnecting('Подключение к столу…', 'Связываемся с сервером соединения', () => abort());
   try { await loadPeer(); } catch (e) { return abort('Не удалось загрузить сетевой модуль. Нужен интернет.'); }
   if (done) return;
   const Peer = PeerCtor();
   peer = new Peer(PEER_OPTS);
-  to = setTimeout(() => abort('Не удалось подключиться к столу. Проверьте интернет или попросите новую ссылку.'), 20000);
+  to = setTimeout(() => abort(stage === 'broker'
+    ? 'Нет связи с сервером соединения. Проверьте интернет.'
+    : stage === 'ice' ? ICE_FAIL : 'Хост не отвечает. Убедитесь, что стол открыт, или попросите новую ссылку.'), 25000);
   net.peer = peer;
   peer.on('open', () => {
     if (done) return;
+    setStage('ice', 'Устанавливаем соединение с хостом');
     const conn = peer.connect(PEER_PREFIX + code, {reliable: true, serialization: 'json'});
     net.conn = conn;
+    const watchIce = () => {
+      if (done) return;
+      const pc = conn.peerConnection;
+      if (!pc) return setTimeout(watchIce, 200);
+      pc.addEventListener('iceconnectionstatechange', () => {
+        if (pc.iceConnectionState === 'failed') abort(ICE_FAIL);
+        else if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') setStage('hello', 'Садимся за стол');
+      });
+    };
+    watchIce();
     conn.on('open', () => conn.send({t:'hello', name: profile.name, balance: profile.balance}));
     conn.on('data', msg => {
       if (!msg || typeof msg !== 'object') return;
