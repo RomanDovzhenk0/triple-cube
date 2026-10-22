@@ -469,7 +469,7 @@ svg{display:block}
     <li>Три кубика бросаются одновременно. <b>Число выигрывает</b>, если оно выпало на любом кубике, равно сумме любых двух кубиков или сумме всех трёх.<br><span class="muted">Пример: 2 · 5 · 4 → выигрывают 2, 4, 5 (кубики), 6, 7, 9 (пары) и 11 (сумма).</span></li>
     <li><b>«3×»</b> выигрывает, если на всех трёх кубиках выпало одно и то же число.</li>
     <li>Сыгравшая ставка <b>удваивается</b>: поставили 1 000 — получили 2 000.</li>
-    <li><b>Бесконечные фишки:</b> режим без риска. Ставьте сколько угодно, баланс не меняется, лимиты стола те же. За столом считается только итог сессии.</li>
+    <li><b>Бесконечные фишки:</b> режим без риска. Баланс не меняется, лимита на сумму ставки нет, есть фишки до 10M. Ставить можно по-прежнему не больше чем на 3 клетки. За столом считается итог сессии.</li>
     <li>Для старта вы получаете 1 000 фишек. Бонус дня растёт от 100 до 700 фишек за 7 дней подряд, потом цикл начинается заново. Если пропустить день, серия обнулится.</li>
     <li><b>Игра с друзьями:</b> вы открываете стол и отправляете ссылку. Друг открывает её и сразу садится за ваш стол. Всего за столом до 4 игроков. Когда все нажали «Готов», кубики бросаются для всех одновременно. Если кто-то уже готов, остальным даётся 25 секунд.</li>
   </ul>
@@ -523,6 +523,11 @@ const LIMIT_SINGLE = 10000, LIMIT_MULTI = 2000, MAX_CELLS = 3;
 const CHIPS = [
   {v:10, c:'#2f5fc4'}, {v:50, c:'#b8233a'}, {v:100, c:'#1f7a4d'},
   {v:500, c:'#6a2bb0'}, {v:1000, c:'#1b1f24'}, {v:5000, c:'#c47a12'}
+];
+// В режиме бесконечных фишек лимитов нет — нужны крупные номиналы
+const CHIPS_INF = [
+  {v:100, c:'#1f7a4d'}, {v:1000, c:'#1b1f24'}, {v:10000, c:'#2f5fc4'},
+  {v:100000, c:'#b8233a'}, {v:1000000, c:'#6a2bb0'}, {v:10000000, c:'#c47a12'}
 ];
 const MAX_PLAYERS = 4;
 const ROLL_MS = 2300;          // длительность анимации броска
@@ -594,6 +599,8 @@ const fmt = n => Math.round(n).toLocaleString('ru-RU');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sumBets = b => Object.values(b).reduce((s, v) => s + v, 0);
 const signed = n => (n >= 0 ? '+' : '−') + fmt(Math.abs(n));
+// Короткая запись крупных сумм: 250K, 1,5M
+const fmtShort = n => n >= 1e6 ? +(n / 1e6).toFixed(n % 1e6 ? 1 : 0) + 'M' : n >= 1e5 ? +(n / 1e3).toFixed(0) + 'K' : fmt(n);
 const initial = name => (String(name).trim()[0] || '?').toUpperCase();
 
 function rnd6() {
@@ -700,12 +707,12 @@ function cleanBets(b) {
   }
   return out;
 }
-function validateBets(b, balance) {
+function validateBets(b, balance, unlimited) {
   const keys = Object.keys(b), n = keys.length;
   if (!n) return null;
   if (n > MAX_CELLS) return 'Ставить можно максимум на 3 клетки';
   const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
-  if (keys.some(k => b[k] > cap)) {
+  if (!unlimited && keys.some(k => b[k] > cap)) {
     return n === 1 ? `На одну клетку максимум ${fmt(LIMIT_SINGLE)}` : `При ставке на 2–3 клетки максимум ${fmt(LIMIT_MULTI)} на каждую`;
   }
   if (sumBets(b) > balance) return 'Недостаточно фишек';
@@ -811,6 +818,7 @@ let net = {peer: null, conn: null, lastSeen: 0, hb: null};
 let pendingRoom = null;   // код стола из ссылки-приглашения
 
 function me() { return S.view ? S.view.players.find(p => p.id === S.myId) : null; }
+function isInf() { return !!(S.view && S.view.infinite); }
 function myBalance() {
   if (S.view && S.view.infinite) return Infinity;
   if (S.animating) return S.frozenBalance;
@@ -893,7 +901,7 @@ class Room {
       case 'bets': {
         if (this.phase !== 'betting') return this.sendTo(id, {t:'error', msg:'Ставки на этот раунд закрыты'});
         const bets = cleanBets(msg.bets);
-        const err = validateBets(bets, this.infinite ? Infinity : p.balance);
+        const err = validateBets(bets, this.infinite ? Infinity : p.balance, this.infinite);
         if (err) return this.sendTo(id, {t:'error', msg: err});
         p.bets = bets; p.ready = true;
         const all = [...this.players.values()].every(q => q.ready);
@@ -1255,10 +1263,10 @@ function placeChip(cell) {
   const cells = Object.keys(S.myBets);
   const n = cells.length + (cur ? 0 : 1);
   if (n > MAX_CELLS) return toast('Ставить можно максимум на 3 клетки', 'err');
-  if (n > 1 && cells.some(k => S.myBets[k] > LIMIT_MULTI)) {
+  if (!isInf() && n > 1 && cells.some(k => S.myBets[k] > LIMIT_MULTI)) {
     return toast(`При ставке на 2–3 клетки на каждую можно поставить не больше ${fmt(LIMIT_MULTI)}. Уменьшите ставку.`, 'err');
   }
-  const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
+  const cap = isInf() ? Infinity : n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
   const free = myBalance() - sumBets(S.myBets);
   const add = Math.min(S.chip, cap - cur, free);
   if (add <= 0) return toast(free <= 0 ? 'Недостаточно фишек' : `Лимит клетки — ${fmt(cap)}`, 'err');
@@ -1284,14 +1292,14 @@ function clearBets() { if (isLocked()) return; S.myBets = {}; S.stack = []; rend
 function repeatBets() {
   if (isLocked() || !S.lastBets) return;
   const cand = {...S.lastBets};
-  const err = validateBets(cand, myBalance());
+  const err = validateBets(cand, myBalance(), isInf());
   if (err) return toast(err, 'err');
   S.myBets = cand;
   S.stack = Object.entries(cand).map(([cell, add]) => ({cell, add}));
   sfxChip(); render();
 }
 function submitBets() {
-  const err = validateBets(S.myBets, myBalance());
+  const err = validateBets(S.myBets, myBalance(), isInf());
   if (err) { toast(err, 'err'); return false; }
   S.submitting = true;
   sendToHost({t:'bets', bets: {...S.myBets}});
@@ -1335,14 +1343,20 @@ function buildBoard() {
   });
 }
 function buildChips() {
-  $('#chips').innerHTML = CHIPS.map(ch =>
-    `<button class="chip" data-v="${ch.v}" style="--c:${ch.c}"><span>${ch.v >= 1000 ? ch.v / 1000 + 'K' : ch.v}</span></button>`).join('');
+  const set = isInf() ? CHIPS_INF : CHIPS;
+  if (S.chipSet === set) return;
+  S.chipSet = set;
+  if (!set.some(ch => ch.v === S.chip)) S.chip = set === CHIPS_INF ? 10000 : 100;
+  $('#chips').innerHTML = set.map(ch =>
+    `<button class="chip" data-v="${ch.v}" style="--c:${ch.c}"><span>${ch.v >= 1e6 ? ch.v / 1e6 + 'M' : ch.v >= 1000 ? ch.v / 1000 + 'K' : ch.v}</span></button>`).join('');
+  renderChips();
 }
 function renderChips() {
   document.querySelectorAll('.chip').forEach(b => b.classList.toggle('sel', +b.dataset.v === S.chip));
 }
 function render() {
   if (!S.view) return;
+  buildChips();
   renderTopbar(); renderBoard(); renderBetInfo(); renderActions(); renderStatus(); renderRollInfo();
   if (!S.animating) { renderPlayers(); renderHistory(); }
 }
@@ -1363,7 +1377,7 @@ function renderBoard() {
   for (const c of CELLS) {
     const el = cellEls[c], amt = S.myBets[c] || 0;
     el.classList.toggle('has', amt > 0);
-    el.querySelector('.stake').textContent = amt ? fmt(amt) : '';
+    el.querySelector('.stake').textContent = amt ? fmtShort(amt) : '';
     el.querySelector('.marks').innerHTML = v.players
       .filter(p => p.id !== S.myId && p.ready && p.bets[c])
       .map(p => `<i style="background:${p.color}" title="${esc(p.name)}: ${fmt(p.bets[c])}"></i>`).join('');
@@ -1380,7 +1394,8 @@ function renderBetInfo() {
   $('#betInfo').innerHTML = total
     ? `Ставка <b>${fmt(total)}</b>` + (S.view.infinite ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
     : 'Выберите фишку и нажмите на клетку';
-  $('#limitInfo').textContent = n ? `Клеток ${n} из 3 · до ${fmt(n === 1 ? LIMIT_SINGLE : LIMIT_MULTI)} на клетку` : 'Лимит 10 000 · на 2–3 клетки по 2 000';
+  $('#limitInfo').textContent = isInf() ? `Без лимита · клеток ${n} из 3`
+    : n ? `Клеток ${n} из 3 · до ${fmt(n === 1 ? LIMIT_SINGLE : LIMIT_MULTI)} на клетку` : 'Лимит 10 000 · на 2–3 клетки по 2 000';
 }
 function renderActions() {
   const m = me(), open = bettingOpen(), locked = isLocked();
@@ -1509,7 +1524,7 @@ function renderModeSeg() {
   const inf = !!profile.infinite;
   document.querySelectorAll('#modeSeg .seg-btn').forEach(b => b.classList.toggle('active', (b.dataset.inf === '1') === inf));
   $('#segHint').textContent = inf
-    ? 'Ставьте сколько угодно — ваш баланс не меняется. Друзья за вашим столом тоже играют без риска.'
+    ? 'Ставки без лимита, ваш баланс не меняется. Друзья за вашим столом тоже играют без риска.'
     : 'Игра на ваш баланс фишек.';
 }
 function renderMenu() {
@@ -1552,7 +1567,7 @@ function releaseWake() { try { wakeLock && wakeLock.release(); } catch (e) {} wa
 // ================= Старт =================
 function init() {
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic); });
-  buildDice(); buildBoard(); buildChips();
+  buildDice(); buildBoard();
 
   const param = new URLSearchParams(location.search).get('room');
   if (param) pendingRoom = param;
