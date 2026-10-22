@@ -141,6 +141,12 @@ svg{display:block}
 .mode-txt small{font-size:13px;color:var(--muted);line-height:1.35}
 .mode>.chev{color:var(--muted);position:relative}
 .mode>.chev svg{width:20px;height:20px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:var(--r-md);background:rgba(0,0,0,.35);border:1px solid var(--stroke)}
+.seg-btn{height:42px;padding:0 6px;white-space:nowrap;border-radius:12px;font-weight:700;font-size:clamp(12.5px,3.5vw,14px);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;transition:background .2s,color .2s}
+.seg-btn .inf{font-size:20px;line-height:1;font-weight:600}
+.seg-btn.active{background:linear-gradient(180deg,rgba(226,190,106,.22),rgba(226,190,106,.08));color:var(--gold-1);box-shadow:inset 0 0 0 1px var(--gold-line)}
+.seg-hint{font-size:13px;color:var(--muted);text-align:center;margin-top:-8px;line-height:1.4}
+.inf-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;color:var(--gold-1);background:rgba(226,190,106,.12);border:1px solid var(--gold-line)}
 .quick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .quick-btn{display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:var(--r-md);background:var(--glass);border:1px solid var(--stroke);font-weight:700;font-size:14px;position:relative;transition:background .2s}
 .quick-btn:hover{background:var(--glass-2)}
@@ -370,6 +376,11 @@ svg{display:block}
       <p class="tagline">Классическая игра в кости</p>
       <div class="divider"><i></i></div>
     </section>
+    <div class="seg" id="modeSeg">
+      <button class="seg-btn" data-inf="0">Обычная игра</button>
+      <button class="seg-btn" data-inf="1"><span class="inf">∞</span>Бесконечные фишки</button>
+    </div>
+    <p class="seg-hint" id="segHint"></p>
     <section class="modes">
       <button class="mode featured" id="btnCreate">
         <span class="mode-ico" data-ic="users"></span>
@@ -458,6 +469,7 @@ svg{display:block}
     <li>Три кубика бросаются одновременно. <b>Число выигрывает</b>, если оно выпало на любом кубике, равно сумме любых двух кубиков или сумме всех трёх.<br><span class="muted">Пример: 2 · 5 · 4 → выигрывают 2, 4, 5 (кубики), 6, 7, 9 (пары) и 11 (сумма).</span></li>
     <li><b>«3×»</b> выигрывает, если на всех трёх кубиках выпало одно и то же число.</li>
     <li>Сыгравшая ставка <b>удваивается</b>: поставили 1 000 — получили 2 000.</li>
+    <li><b>Бесконечные фишки:</b> режим без риска. Ставьте сколько угодно, баланс не меняется, лимиты стола те же. За столом считается только итог сессии.</li>
     <li>Для старта вы получаете 1 000 фишек. Бонус дня растёт от 100 до 700 фишек за 7 дней подряд, потом цикл начинается заново. Если пропустить день, серия обнулится.</li>
     <li><b>Игра с друзьями:</b> вы открываете стол и отправляете ссылку. Друг открывает её и сразу садится за ваш стол. Всего за столом до 4 игроков. Когда все нажали «Готов», кубики бросаются для всех одновременно. Если кто-то уже готов, остальным даётся 25 секунд.</li>
   </ul>
@@ -800,6 +812,7 @@ let pendingRoom = null;   // код стола из ссылки-приглаш�
 
 function me() { return S.view ? S.view.players.find(p => p.id === S.myId) : null; }
 function myBalance() {
+  if (S.view && S.view.infinite) return Infinity;
   if (S.animating) return S.frozenBalance;
   const m = me(); return m ? m.balance : profile.balance;
 }
@@ -808,8 +821,9 @@ function isLocked() { const m = me(); return !bettingOpen() || S.submitting || !
 
 // ================= Комната (логика хоста / дилера) =================
 class Room {
-  constructor(mode) {
+  constructor(mode, infinite) {
     this.mode = mode;                // 'dealer' | 'online'
+    this.infinite = !!infinite;      // бесконечные фишки: баланс не меняется, считается итог сессии
     this.players = new Map();
     this.phase = 'betting'; this.round = 1; this.history = [];
     this.deadline = 0; this.timer = null; this.hb = null;
@@ -817,7 +831,7 @@ class Room {
   }
   addPlayer(id, name, balance, conn) {
     const used = new Set([...this.players.values()].map(p => p.color));
-    const p = {id, name, balance, conn, ready: false, bets: {}, host: id === 'host',
+    const p = {id, name, balance, conn, ready: false, bets: {}, host: id === 'host', net: 0,
       color: PLAYER_COLORS.find(c => !used.has(c)) || '#fff', lastSeen: Date.now()};
     this.players.set(id, p);
     return p;
@@ -854,11 +868,11 @@ class Room {
   }
   publicState() {
     return {
-      t: 'state', mode: this.mode, phase: this.phase, round: this.round, code: this.code,
+      t: 'state', mode: this.mode, infinite: this.infinite, phase: this.phase, round: this.round, code: this.code,
       timeLeft: this.deadline ? Math.max(0, this.deadline - Date.now()) : 0,
       history: this.history,
       players: [...this.players.values()].map(p => ({id: p.id, name: p.name, balance: p.balance,
-        ready: p.ready, bets: p.ready ? p.bets : {}, color: p.color, host: p.host}))
+        ready: p.ready, bets: p.ready ? p.bets : {}, color: p.color, host: p.host, net: p.net}))
     };
   }
   sendTo(id, msg) {
@@ -879,7 +893,7 @@ class Room {
       case 'bets': {
         if (this.phase !== 'betting') return this.sendTo(id, {t:'error', msg:'Ставки на этот раунд закрыты'});
         const bets = cleanBets(msg.bets);
-        const err = validateBets(bets, p.balance);
+        const err = validateBets(bets, this.infinite ? Infinity : p.balance);
         if (err) return this.sendTo(id, {t:'error', msg: err});
         p.bets = bets; p.ready = true;
         const all = [...this.players.values()].every(q => q.ready);
@@ -917,16 +931,16 @@ class Room {
     const results = {};
     for (const p of this.players.values()) {
       let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, winCells = [];
-      if (staked > 0 && staked <= p.balance) {
-        p.balance -= staked;
+      if (staked > 0 && (this.infinite || staked <= p.balance)) {
         ({payout, winCells} = settle(p.bets, ev));
-        p.balance += payout;
+        if (this.infinite) p.net += payout - staked;
+        else p.balance += payout - staked;
       } else staked = 0;
-      results[p.id] = {bets: staked ? p.bets : {}, staked, payout, winCells, balance: p.balance};
+      results[p.id] = {bets: staked ? p.bets : {}, staked, payout, winCells, balance: p.balance, net: p.net};
       p.ready = false; p.bets = {};
     }
     const self = this.players.get('host');
-    if (self) { profile.balance = self.balance; saveProfile(); }
+    if (self && !this.infinite) { profile.balance = self.balance; saveProfile(); }
     this.history.unshift(dice);
     if (this.history.length > 12) this.history.length = 12;
     this.broadcast({t:'roll', dice, round: this.round, results});
@@ -1063,7 +1077,7 @@ async function createRoom() {
       if (cancelled) return;
       opened = true; clearTimeout(to);
       hideConnecting();
-      room = new Room('online');
+      room = new Room('online', profile.infinite);
       room.code = code; room.peer = p;
       room.addPlayer('host', profile.name, profile.balance, null);
       room.startHeartbeat();
@@ -1154,7 +1168,7 @@ async function joinRoom(raw) {
 }
 
 function startDealer() {
-  room = new Room('dealer');
+  room = new Room('dealer', profile.infinite);
   room.addPlayer('host', profile.name, profile.balance, null);
   S.role = 'dealer'; S.myId = 'host'; S.code = null;
   enterGame();
@@ -1185,7 +1199,7 @@ function applyState(msg) {
   if (msg.timeLeft > 0) S.localDeadline = Date.now() + msg.timeLeft;
   else { S.localDeadline = 0; S.autoSubmitted = false; }
   const m = me();
-  if (m && !S.animating && profile.balance !== m.balance) { profile.balance = m.balance; saveProfile(); }
+  if (m && !S.animating && !msg.infinite && profile.balance !== m.balance) { profile.balance = m.balance; saveProfile(); }
   if (first && !$('#screen-game').classList.contains('active')) enterGame();
   render();
 }
@@ -1199,7 +1213,7 @@ function onRoll(msg) {
   S.view.phase = 'rolling';
   const res = msg.results[S.myId];
   if (res && res.staked > 0) { S.lastBets = {...res.bets}; S.myBets = {}; S.stack = []; }
-  if (res) { profile.balance = res.balance; saveProfile(); }
+  if (res && !S.view.infinite) { profile.balance = res.balance; saveProfile(); }
   S.lastRoll = null;
   animateRoll(msg.dice);
   render();
@@ -1210,7 +1224,7 @@ function onRoll(msg) {
     S.lastRoll = {dice: msg.dice, ev, res};
     S.view.players.forEach(p => {
       const r = msg.results[p.id];
-      if (r) p.balance = r.balance;
+      if (r) { p.balance = r.balance; p.net = r.net; }
       p.ready = false; p.bets = {};
     });
     S.view.history = [msg.dice, ...(S.view.history || []).filter(d => d !== msg.dice)].slice(0, 12);
@@ -1334,10 +1348,10 @@ function render() {
 }
 function renderTopbar() {
   const v = S.view;
-  $('#bal').textContent = fmt(myBalance());
-  $('#tbSub').textContent = S.role === 'dealer'
+  $('#bal').textContent = v.infinite ? '∞' : fmt(myBalance());
+  $('#tbSub').textContent = (v.infinite ? '∞ · ' : '') + (S.role === 'dealer'
     ? `Игра с дилером · раунд ${v.round}`
-    : `${S.role === 'host' ? 'Ваш стол' : 'Стол друга'} · ${v.players.length}/${MAX_PLAYERS} · раунд ${v.round}`;
+    : `${S.role === 'host' ? 'Ваш стол' : 'Стол друга'} · ${v.players.length}/${MAX_PLAYERS} · раунд ${v.round}`);
   $('#btnInvite').hidden = !S.code || v.players.length >= MAX_PLAYERS;
   $('#btnSound').innerHTML = ic(profile.sound ? 'volume' : 'mute');
   const badge = $('#chatBadge');
@@ -1364,7 +1378,7 @@ function renderBoard() {
 function renderBetInfo() {
   const total = sumBets(S.myBets), n = Object.keys(S.myBets).length;
   $('#betInfo').innerHTML = total
-    ? `Ставка <b>${fmt(total)}</b> · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`
+    ? `Ставка <b>${fmt(total)}</b>` + (S.view.infinite ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
     : 'Выберите фишку и нажмите на клетку';
   $('#limitInfo').textContent = n ? `Клеток ${n} из 3 · до ${fmt(n === 1 ? LIMIT_SINGLE : LIMIT_MULTI)} на клетку` : 'Лимит 10 000 · на 2–3 клетки по 2 000';
 }
@@ -1432,20 +1446,25 @@ function renderHistory() {
   $('#history').innerHTML = hist.map(d =>
     `<span class="${d[0] === d[1] && d[1] === d[2] ? 't' : ''}">${d.join('·')}<b>${d[0] + d[1] + d[2]}</b></span>`).join('');
 }
+// В бесконечном режиме вместо баланса показываем итог сессии
+function balText(p) {
+  if (!S.view.infinite) return fmt(p.balance);
+  return p.net ? `∞ · итог ${signed(p.net)}` : '∞';
+}
 function renderPlayers() {
   const ps = S.view.players;
   const canInvite = !!S.code;
   let html = ps.map(p => `<div class="seat ${p.id === S.myId ? 'me' : ''}">
       <div class="avatar" style="--pc:${p.color}">${esc(initial(p.name))}</div>
       <div class="seat-info"><div class="seat-name">${esc(p.name)}${p.id === S.myId ? ' <span class="muted">(вы)</span>' : ''}${p.host ? ic('crown') : ''}</div>
-      <div class="seat-bal"><span class="coin sm"></span>${fmt(p.balance)}</div></div>
+      <div class="seat-bal"><span class="coin sm"></span>${balText(p)}</div></div>
       ${p.ready ? '<span class="tag ok">Готов</span>' : '<span class="tag">Ставит</span>'}</div>`).join('');
   for (let i = ps.length; i < MAX_PLAYERS; i++) {
     html += `<button class="seat empty" data-invite ${canInvite ? '' : 'disabled'}><div class="avatar empty">${ic('userplus')}</div>
       <div class="seat-info"><div class="seat-name">Свободное место</div><div class="seat-bal">Пригласить по ссылке</div></div></button>`;
   }
   $('#players').innerHTML = html;
-  let mini = ps.map(p => `<div class="pm ${p.ready ? 'ready' : ''}"><div class="avatar sm" style="--pc:${p.color}">${esc(initial(p.name))}</div>${esc(p.name)} <b>${fmt(p.balance)}</b></div>`).join('');
+  let mini = ps.map(p => `<div class="pm ${p.ready ? 'ready' : ''}"><div class="avatar sm" style="--pc:${p.color}">${esc(initial(p.name))}</div>${esc(p.name)} <b>${balText(p)}</b></div>`).join('');
   if (canInvite && ps.length < MAX_PLAYERS) mini += `<button class="pm add" data-invite><div class="avatar sm empty">${ic('userplus')}</div>Пригласить</button>`;
   $('#playersMini').innerHTML = mini;
 }
@@ -1486,7 +1505,15 @@ function confirmDialog(text) {
     $('#confirmNo').onclick = () => done(false);
   });
 }
+function renderModeSeg() {
+  const inf = !!profile.infinite;
+  document.querySelectorAll('#modeSeg .seg-btn').forEach(b => b.classList.toggle('active', (b.dataset.inf === '1') === inf));
+  $('#segHint').textContent = inf
+    ? 'Ставьте сколько угодно — ваш баланс не меняется. Друзья за вашим столом тоже играют без риска.'
+    : 'Игра на ваш баланс фишек.';
+}
 function renderMenu() {
+  renderModeSeg();
   $('#menuName').textContent = profile.name;
   $('#menuAvatar').textContent = initial(profile.name);
   $('#menuBal').textContent = fmt(profile.balance);
@@ -1541,6 +1568,10 @@ function init() {
   };
   $('#regName').onkeydown = e => { if (e.key === 'Enter') $('#btnRegister').click(); };
 
+  $('#modeSeg').onclick = e => {
+    const b = e.target.closest('.seg-btn'); if (!b) return;
+    profile.infinite = b.dataset.inf === '1'; saveProfile(); sfxChip(); renderModeSeg();
+  };
   $('#btnDealer').onclick = () => { audio(); startDealer(); };
   $('#btnCreate').onclick = () => { audio(); createRoom(); };
   $('#btnCancelConn').onclick = () => { if (cancelConnecting) cancelConnecting(); else hideConnecting(); };
