@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Luck Cube и Color Clash — играйте против дилера или с друзьями за одним столом.">
+<meta name="description" content="Luck Cube, Color Clash, Golden Pick и Card Roll — играйте против дилера или с друзьями за одним столом.">
 <title>Clash Game</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -361,7 +361,7 @@ svg{display:block}
 .tools-row .btn.on{background:rgba(226,190,106,.2);border-color:var(--gold-2)}
 
 /* ---------- Golden Pick ---------- */
-.games .game-card[data-game=chest]{grid-column:span 2;flex-direction:row;align-items:center;gap:14px}
+.games .game-card[data-game=chest],.games .game-card[data-game=cards]{grid-column:span 2;flex-direction:row;align-items:center;gap:14px}
 .gc-text{display:flex;flex-direction:column;gap:3px}
 .gc-text small{margin-top:0}
 .hero-chests{display:none;justify-content:center;align-items:flex-end;gap:clamp(14px,5vw,26px);padding:22px 0 24px}
@@ -395,6 +395,55 @@ svg{display:block}
 .chest-h i{width:9px;height:9px;border-radius:50%;background:#2a2f35}
 .chest-h i.big{background:var(--gold-2);box-shadow:0 0 6px rgba(226,190,106,.8)}
 .chest-h i.small{background:#8fc3ff}
+
+/* ---------- Card Roll ---------- */
+.hero-cards{display:none;justify-content:center;align-items:flex-end;padding:22px 0 26px}
+.hero-cards .pcw{--cw:clamp(56px,16vw,70px);margin:0 -10px;animation:float 4s ease-in-out infinite;filter:drop-shadow(0 12px 16px rgba(0,0,0,.55))}
+.hero-cards .pcw:nth-child(2){animation-delay:-1.3s;margin-bottom:10px}
+.hero-cards .pcw:nth-child(3){animation-delay:-2.6s}
+.hero-cards .pv{display:none}
+.sel-cards .hero-cards{display:flex}
+.sel-cards .hero-dice-menu{display:none}
+.g-cards .tray-dice,.g-cards .tray-color{display:none}
+.tray-cards{display:none;gap:14px}
+.g-cards .tray-cards{display:flex}
+.cr-top{display:flex;align-items:center;justify-content:center;gap:clamp(22px,8vw,46px)}
+#cardDieRow{--die:clamp(52px,14.5vw,70px)}
+#cardDieRow .die{transition-duration:.9s}
+#cardDieRow .tossing .die-wrap,#cardDieRow .tossing .die-shadow{animation-duration:.95s}
+.cr-sum{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:104px}
+.cr-sum small{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.cr-sum b{font-family:var(--serif);font-size:clamp(40px,11.5vw,54px);line-height:1;font-weight:800;font-variant-numeric:lining-nums tabular-nums;color:var(--gold-1);font-feature-settings:"lnum" 1;transition:color .25s}
+.cr-sum b.win{color:var(--win)}
+.cr-sum b.lose{color:var(--lose)}
+.cr-sum b.bump{animation:bump .26s ease}
+@keyframes bump{50%{transform:scale(1.16)}}
+.cr-zone{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.72);white-space:nowrap}
+.cr-cards{--cw:clamp(38px,12.4vw,62px);width:100%;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:8px 6px;min-height:calc(var(--cw) / .7 + 26px)}
+.cr-cards:empty{align-items:center}
+.cr-cards:empty::before{content:"Карты появятся здесь";font-size:12.5px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.04em}
+.pcw{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pc{position:relative;width:var(--cw);aspect-ratio:.7;border-radius:calc(var(--cw) * .14);background:linear-gradient(160deg,#fff 0%,#f1ebdb 100%);color:#15181c;font-size:calc(var(--cw) * .3);font-weight:800;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 6px 12px -4px rgba(0,0,0,.6)}
+.pc.red{color:#c0283d}
+.pc .tl{position:absolute;left:11%;top:6%;display:flex;flex-direction:column;align-items:center;line-height:1}
+.pc .tl i{font-style:normal;font-size:.78em;margin-top:.05em}
+.pc .ct{position:absolute;inset:0;display:grid;place-items:center;padding-top:.9em;font-size:1.75em;line-height:1}
+.pv{font-size:calc(var(--cw) * .25);font-weight:800;line-height:1.35;padding:0 8px;border-radius:999px;background:rgba(0,0,0,.32);color:rgba(255,255,255,.78);font-variant-numeric:tabular-nums}
+.pv.ace{background:var(--gold-grad);color:#241904}
+.pcw.deal{animation:deal .38s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes deal{from{opacity:0;transform:translateY(-28px) rotate(-10deg) scale(.7)}}
+.board.cards{grid-template-columns:1fr}
+.board.cards .cell{aspect-ratio:auto;min-height:112px;justify-content:flex-start;padding:14px 12px 36px;gap:6px}
+.bcell .bc-title{font-size:11.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+.bcell .bc-main{font-family:var(--serif);font-size:clamp(22px,6.4vw,28px);font-weight:800;line-height:1.1;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bcell .bc-zones{display:flex;gap:4px;width:min(100%,300px)}
+.bcell .bc-zones i{font-style:normal;font-size:10.5px;font-weight:800;padding:3px 0;border-radius:6px;text-align:center;flex:1}
+.bcell .bc-zones i:nth-child(2){flex:2.2}
+.bcell .bc-zones .lose{background:rgba(255,107,107,.18);color:#ffb3b3}
+.bcell .bc-zones .win{background:rgba(61,220,151,.2);color:#8ff0c2}
+.history .cr-h{font-weight:800}
+.history .cr-h.win{color:var(--win);border-color:rgba(61,220,151,.4)}
+.history .cr-h.lose{color:#ff9b9b}
 
 /* ---------- Модальные окна ---------- */
 .modal{position:fixed;inset:0;background:rgba(2,4,6,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
@@ -469,6 +518,7 @@ svg{display:block}
       <div class="dice-row hero-dice hero-dice-menu" data-hero></div>
       <div class="hero-orbs"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></div>
       <div class="hero-chests"></div>
+      <div class="hero-cards"></div>
       <h1 class="wordmark" id="wordmark"></h1>
       <p class="tagline" id="tagline"></p>
       <div class="divider"><i></i></div>
@@ -477,6 +527,7 @@ svg{display:block}
       <button class="game-card" data-game="dice"><span class="gc-ico" data-ic="dices"></span><b>Luck Cube</b><small>Кубик · угадай число · ×2</small></button>
       <button class="game-card" data-game="color"><span class="gc-ico trio"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></span><b>Color Clash</b><small>Угадай цвет · до ×5</small></button>
       <button class="game-card" data-game="chest"><span class="gc-ico" data-ic="chest"></span><span class="gc-text"><b>Golden Pick</b><small>5 сундуков · приз до ×5</small></span></button>
+      <button class="game-card" data-game="cards"><span class="gc-ico" data-ic="cards"></span><span class="gc-text"><b>Card Roll</b><small>Кубик · карты · сумма 11–29 · ×2</small></span></button>
     </div>
     <div class="seg" id="modeSeg">
       <button class="seg-btn" data-inf="0">Обычная игра</button>
@@ -512,6 +563,13 @@ svg{display:block}
         <div class="tray tray-color">
           <div class="orb idle" id="orb"></div>
           <div class="duel" id="duel" hidden>⚔ Дуэль! Выигрыши этого раунда +50%</div>
+        </div>
+        <div class="tray tray-cards">
+          <div class="cr-top">
+            <div class="dice-row" id="cardDieRow"></div>
+            <div class="cr-sum"><small>Сумма</small><b id="crTotal">—</b><span class="cr-zone" id="crZone">нужно 11–29</span></div>
+          </div>
+          <div class="cr-cards" id="crCards"></div>
         </div>
         <div class="tray">
           <div class="roll-info" id="rollInfo"></div>
@@ -565,6 +623,14 @@ svg{display:block}
     <li>Выберите фишку и нажмите на цифру. За раунд ставка делается только на <b>одну цифру</b>, нажатие на другую переносит ставку на неё. Максимум — <b>10 000</b>.</li>
     <li>Бросается <b>один кубик</b>. Если выпала ваша цифра — вы выиграли.</li>
     <li>Выплата <b>×2</b>. Ставка входит в выплату: поставили 1 000 и угадали — получили 2 000.</li>
+  </ul>
+  <ul id="rulesCards" hidden>
+    <li>Выберите фишку (размер ставки) и нажмите на поле <b>«Ваша ставка»</b>. Ставка одна за раунд, лимита на сумму нет.</li>
+    <li>Нажмите «Бросить кубик»: выпадает число <b>от 1 до 6</b>. Столько карт вы получите из колоды в 52 карты.</li>
+    <li>Очки: <b>2–10</b> — по номиналу, <b>валет, дама, король — по 10</b>, <b>туз — 1 или 11</b> (значение туза выбирается случайно).</li>
+    <li>Сумма очков считается автоматически. Если она от <b>11 до 29</b> включительно — вы выиграли, выплата <b>×2</b>. Ставка входит в выплату: 100 → 200.</li>
+    <li>Сумма <b>10 и меньше</b> (недобор) или <b>30 и больше</b> (перебор) — ставка сгорает.</li>
+    <li>Пример: ставка 100, кубик 4, карты 3, 7, король и 5 → 3 + 7 + 10 + 5 = <b>25</b> → вы получаете 200.</li>
   </ul>
   <ul id="rulesChest" hidden>
     <li>На столе <b>5 закрытых сундуков</b>.</li>
@@ -715,7 +781,9 @@ const GAMES = {
   color: {title:'Color Clash', brand:'COLOR CLASH', tagline:'Угадай цвет', cells: COLORS.map(c => c.id), maxCells: 1, limited: false,
     action:'Крутить', busy:'Крутим…', idle:'Выберите цвет и сделайте ставку'},
   chest: {title:'Golden Pick', brand:'GOLDEN PICK', tagline:'Выбери сундук · найди приз', cells:['1','2','3','4','5'], maxCells: 1, limited: false,
-    action:'Открыть сундук', busy:'Сундуки открываются…', idle:'Выберите сундук и сделайте ставку'}
+    action:'Открыть сундук', busy:'Сундуки открываются…', idle:'Выберите сундук и сделайте ставку'},
+  cards: {title:'Card Roll', brand:'CARD ROLL', tagline:'Кубик · карты · сумма 11–29', cells:['bet'], maxCells: 1, limited: false,
+    action:'Бросить кубик', busy:'Раздача…', idle:'Сделайте ставку и бросайте кубик'}
 };
 // Golden Pick: содержимое каждого сундука выбирается случайно и независимо (возврат ≈94%)
 const CHEST_PRIZES = {
@@ -733,6 +801,31 @@ function drawChests() {
   return c;
 }
 const colorOf = id => COLORS.find(c => c.id === id);
+
+// ================= Card Roll =================
+// Кубик 1–6 определяет, сколько карт из колоды в 52 карты получит игрок. Сумма 11–29 выигрывает ×2.
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const SUITS = ['♠', '♥', '♦', '♣'];
+const CARD_MIN = 11, CARD_MAX = 29, CARD_MULT = 2;
+function drawCards() {
+  const die = rnd6(), deck = [];
+  for (const s of SUITS) for (const r of RANKS) deck.push({r, s});
+  for (let i = 0; i < die; i++) {                       // частичное перемешивание Фишера — Йетса: карты не повторяются
+    const j = i + rndInt(deck.length - i);
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  const cards = deck.slice(0, die).map(c => ({r: c.r, s: c.s,
+    v: c.r === 'A' ? (rndInt(2) ? 11 : 1) : 'JQK'.includes(c.r) ? 10 : +c.r}));   // туз: 1 или 11 случайно
+  return {die, cards};
+}
+const cardsTotal = o => o.cards.reduce((s, c) => s + c.v, 0);
+const cardsWin = sum => sum >= CARD_MIN && sum <= CARD_MAX;
+const cardWord = n => n === 1 ? 'карта' : n < 5 ? 'карты' : 'карт';
+function cardHtml(c, cls = '', style = '') {
+  const red = c.s === '♥' || c.s === '♦';
+  return `<div class="pcw ${cls}"><div class="pc${red ? ' red' : ''}"${style ? ` style="${style}"` : ''}><span class="tl">${c.r}<i>${c.s}</i></span><span class="ct">${c.s}</span></div><span class="pv${c.r === 'A' ? ' ace' : ''}">${c.v}</span></div>`;
+}
+const HERO_CARDS = [{r:'A', s:'♠', v:11, rot:-13}, {r:'K', s:'♥', v:10, rot:0}, {r:'7', s:'♦', v:7, rot:13}];
 
 // ================= Иконки =================
 const ICONS = {
@@ -756,7 +849,8 @@ const ICONS = {
   send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
   crown: '<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-4-7z"/><path d="M5 20h14"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
-  chest: '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M3 11a9 9 0 0 1 18 0"/><path d="M3 15h18"/><path d="M12 13v4"/>'
+  chest: '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M3 11a9 9 0 0 1 18 0"/><path d="M3 15h18"/><path d="M12 13v4"/>',
+  cards: '<rect x="3" y="4" width="12" height="16" rx="2" transform="rotate(-9 9 12)"/><rect x="9" y="4" width="12" height="16" rx="2" transform="rotate(9 15 12)"/>'
 };
 const ic = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
 
@@ -888,6 +982,9 @@ function settleBets(game, bets, outcome) {
     for (const [cell, amt] of Object.entries(bets)) {
       if (cellWins(cell, ev)) { payout += Math.floor(amt * multOf(cell)); winCells.push(cell); }
     }
+  } else if (game === 'cards') {
+    const amt = bets.bet || 0;
+    if (amt && cardsWin(cardsTotal(outcome))) { payout = Math.floor(amt * CARD_MULT); winCells.push('bet'); }
   } else if (game === 'chest') {
     for (const [cell, amt] of Object.entries(bets)) {
       const m = CHEST_PRIZES[outcome.chests[+cell - 1]].mult;
@@ -968,13 +1065,13 @@ function sfxLose() { beep(240, .4, {type:'sawtooth', vol:.04, slide:.6}); }
 const PIPS = {1:[5], 2:[3,7], 3:[3,5,7], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9]};
 const FACE_ROT = {1:[0,0], 2:[0,-90], 3:[-90,0], 4:[90,0], 5:[0,90], 6:[0,180]};
 const diceEls = [], spins = [];
-function makeDie(row) {
+function makeDie(row, full) {
   const slot = document.createElement('div'); slot.className = 'die-slot';
   slot.innerHTML = '<div class="die-shadow"></div><div class="die-wrap"><div class="die"></div></div>';
   const die = slot.querySelector('.die');
   for (let v = 1; v <= 6; v++) {
     const f = document.createElement('div'); f.className = 'face f' + v;
-    const fv = v <= 4 ? v : v - 4; // на кубике только цифры 1–4 (лишние грани повторяют 1 и 2)
+    const fv = full || v <= 4 ? v : v - 4; // на кубике только цифры 1–4 (лишние грани повторяют 1 и 2)
     PIPS[fv].forEach(idx => {
       const p = document.createElement('span');
       p.className = 'pip' + (fv === 1 ? ' red' : '');
@@ -992,6 +1089,8 @@ function buildDice() {
     diceEls.push(makeDie(row)); spins.push({x:0, y:0, z:0});
     setDie(i, i + 1, false);
   }
+  diceEls.push(makeDie($('#cardDieRow'), true)); spins.push({x:0, y:0, z:0});   // обычный кубик 1–6 для Card Roll
+  setDie(1, 1, false);
   document.querySelectorAll('[data-hero]').forEach(r => { for (let i = 0; i < 1; i++) makeDie(r); });
 }
 function setDie(i, v, spin) {
@@ -1010,6 +1109,29 @@ function animateRoll(values) {
     const {slot} = diceEls[i];
     slot.classList.remove('tossing'); void slot.offsetWidth; slot.classList.add('tossing');
     setDie(i, v, true);
+  });
+}
+
+// ================= Card Roll: анимация =================
+// 0–1 с: бросок кубика, дальше карты выдаются по одной (всё укладывается в ROLL_MS)
+function animateCards(outcome, session) {
+  sfxRoll(); vibrate([20, 60, 20]);
+  const slot = $('#cardDieRow .die-slot');
+  slot.classList.remove('tossing'); void slot.offsetWidth; slot.classList.add('tossing');
+  setDie(1, outcome.die, true);
+  const box = $('#crCards'), tot = $('#crTotal'), zone = $('#crZone');
+  box.innerHTML = ''; box.dataset.k = '';
+  tot.textContent = '0'; tot.className = ''; zone.textContent = 'раздача…';
+  const n = outcome.cards.length, gap = Math.min(260, Math.floor(1100 / n));
+  let sum = 0;
+  outcome.cards.forEach((c, i) => {
+    setTimeout(() => {
+      if (session !== S.session) return;
+      sum += c.v;
+      box.insertAdjacentHTML('beforeend', cardHtml(c, 'deal'));
+      tot.textContent = sum; tot.classList.remove('bump'); void tot.offsetWidth; tot.classList.add('bump');
+      sfxTick(i); vibrate(10);
+    }, 1000 + i * gap);
   });
 }
 
@@ -1185,7 +1307,7 @@ class Room {
     if (this.destroyed || this.phase !== 'betting') return;
     this.clearTimer();
     this.phase = 'rolling';
-    const outcome = this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.game === 'chest' ? {chests: drawChests()} : this.drawColorRound();
+    const outcome = this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.game === 'chest' ? {chests: drawChests()} : this.game === 'cards' ? drawCards() : this.drawColorRound();
     const results = {};
     for (const p of this.players.values()) {
       let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, bonus = 0, winCells = [];
@@ -1231,6 +1353,7 @@ class Room {
   }
 }
 function historyItem(game, outcome) {
+  if (game === 'cards') return {n: cardsTotal(outcome)};
   if (game === 'chest') return outcome.chests;
   return game === 'dice' ? outcome.dice : {c: outcome.color, duel: !!outcome.duel};
 }
@@ -1487,6 +1610,7 @@ function onRoll(msg) {
   S.lastRoll = null;
   if (S.game === 'dice') animateRoll(outcome.dice);
   else if (S.game === 'chest') { sfxRoll(); vibrate([20, 60, 20]); }
+  else if (S.game === 'cards') animateCards(outcome, session);
   else animateColor(outcome.color, session);
   render();
   setTimeout(() => {
@@ -1510,7 +1634,7 @@ function onRoll(msg) {
         const r = msg.results[p.id];
         if (r && r.staked > 0) parts.push(`${p.name} ${signed(r.payout - r.staked)}`);
       }
-      const what = S.game === 'chest' ? 'сундуки открыты' : S.game === 'dice'
+      const what = S.game === 'cards' ? `кубик ${outcome.die}, сумма ${cardsTotal(outcome)}` : S.game === 'chest' ? 'сундуки открыты' : S.game === 'dice'
         ? `выпало ${outcome.dice[0]} (×${DICE_MULT})`
         : `${colorOf(outcome.color).name.toLowerCase()} ×${colorOf(outcome.color).mult}${outcome.duel ? ' (дуэль)' : ''}`;
       addChat({sys: true, text: `Раунд ${msg.round}: ${what}${parts.length ? ' — ' + parts.join(', ') : ''}`});
@@ -1617,6 +1741,14 @@ function buildBoard(game) {
       b.appendChild(el);
       cellEls[c] = el;
     });
+  } else if (game === 'cards') {
+    const el = document.createElement('button');
+    el.className = 'cell bcell';
+    el.dataset.cell = 'bet';
+    el.innerHTML = `<span class="bc-title">Ваша ставка</span><span class="bc-main">Сумма 11–29 · ×${CARD_MULT}</span>`
+      + '<span class="bc-zones"><i class="lose">≤10</i><i class="win">11–29 ✓</i><i class="lose">≥30</i></span>' + extras;
+    b.appendChild(el);
+    cellEls.bet = el;
   } else if (game === 'chest') {
     GAMES.chest.cells.forEach(c => {
       const el = document.createElement('button');
@@ -1653,7 +1785,7 @@ function render() {
   if (!S.view) return;
   buildChips();
   renderTopbar(); renderBoard(); renderBetInfo(); renderActions(); renderStatus(); renderRollInfo();
-  if (!S.animating) { renderPlayers(); renderHistory(); renderColorTray(); }
+  if (!S.animating) { renderPlayers(); renderHistory(); renderColorTray(); renderCardsTray(); }
 }
 function renderTopbar() {
   const v = S.view, n = v.players.length;
@@ -1682,7 +1814,7 @@ function renderBoard() {
       .filter(p => p.id !== S.myId && p.ready && p.bets[c])
       .map(p => `<i style="background:${p.color}" title="${esc(p.name)}: ${fmt(p.bets[c])}"></i>`).join('');
     const kind = S.game === 'chest' && lr ? lr.outcome.chests[+c - 1] : null;
-    const hit = !!lr && (S.game === 'dice' ? cellWins(c, lr.ev) : S.game === 'chest' ? kind !== 'empty' : lr.outcome.color === c);
+    const hit = !!lr && (S.game === 'cards' ? cardsWin(cardsTotal(lr.outcome)) : S.game === 'dice' ? cellWins(c, lr.ev) : S.game === 'chest' ? kind !== 'empty' : lr.outcome.color === c);
     if (S.game === 'chest') {
       el.classList.toggle('open', !!lr);
       el.classList.remove('k-big', 'k-small', 'k-empty');
@@ -1700,8 +1832,8 @@ function renderBetInfo() {
   const total = sumBets(S.myBets), n = Object.keys(S.myBets).length;
   $('#betInfo').innerHTML = total
     ? `Ставка <b>${fmt(total)}</b>` + (isInf() ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
-    : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : S.game === 'chest' ? 'Выберите фишку и нажмите на сундук' : 'Выберите фишку и нажмите на клетку';
-  $('#limitInfo').textContent = S.game === 'chest' ? 'Без лимита · один сундук за раунд' : S.game === 'color' ? 'Без лимита · один цвет за раунд'
+    : S.game === 'cards' ? 'Выберите фишку и нажмите на поле ставки' : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : S.game === 'chest' ? 'Выберите фишку и нажмите на сундук' : 'Выберите фишку и нажмите на клетку';
+  $('#limitInfo').textContent = S.game === 'cards' ? 'Без лимита · выигрыш при сумме 11–29' : S.game === 'chest' ? 'Без лимита · один сундук за раунд' : S.game === 'color' ? 'Без лимита · один цвет за раунд'
     : isInf() ? 'Без лимита · одна цифра за раунд'
     : `Лимит ${fmt(LIMIT_SINGLE)} · одна цифра за раунд`;
 }
@@ -1733,7 +1865,7 @@ function renderStatus() {
   if (!v) return;
   const m = me();
   let t, urgent = false;
-  if (S.animating) t = S.game === 'dice' ? 'Кубики в игре…' : S.game === 'chest' ? 'Сундуки открываются…' : 'Цвет выбирается…';
+  if (S.animating) t = S.game === 'cards' ? 'Кубик брошен, карты раздаются…' : S.game === 'dice' ? 'Кубики в игре…' : S.game === 'chest' ? 'Сундуки открываются…' : 'Цвет выбирается…';
   else if (v.phase !== 'betting') t = 'Подсчёт выигрышей…';
   else if (v.players.length === 1) {
     t = sumBets(S.myBets) ? `Ставка сделана. Жмите «${GAMES[S.game].action}»`
@@ -1746,6 +1878,15 @@ function renderStatus() {
   }
   el.textContent = t;
   box.classList.toggle('urgent', urgent);
+}
+function renderCardsTray() {
+  if (S.game !== 'cards') return;
+  const lr = S.lastRoll, box = $('#crCards'), tot = $('#crTotal'), zone = $('#crZone');
+  if (!lr) { box.innerHTML = ''; box.dataset.k = ''; tot.textContent = '—'; tot.className = ''; zone.textContent = 'нужно 11–29'; return; }
+  const o = lr.outcome, sum = cardsTotal(o), win = cardsWin(sum), key = o.cards.map(c => c.r + c.s + c.v).join();
+  if (box.dataset.k !== key) { box.innerHTML = o.cards.map(c => cardHtml(c)).join(''); box.dataset.k = key; }
+  tot.textContent = sum; tot.className = win ? 'win' : 'lose';
+  zone.textContent = win ? `Победа ×${CARD_MULT}` : sum < CARD_MIN ? 'Недобор: нужно 11+' : 'Перебор: нужно до 29';
 }
 function renderColorTray() {
   if (S.game !== 'color') return;
@@ -1760,7 +1901,11 @@ function renderRollInfo() {
   if (!S.lastRoll) { el.innerHTML = `<div class="ri-main idle">${g.idle}</div>`; return; }
   const {outcome, ev, res} = S.lastRoll;
   let h;
-  if (S.game === 'chest') {
+  if (S.game === 'cards') {
+    const sum = cardsTotal(outcome), n = outcome.cards.length;
+    h = `<div class="ri-main"><span class="dv">${outcome.die}</span><span class="op">→ ${n} ${cardWord(n)} =</span><span class="tot">${sum}</span></div>`;
+    h += `<div class="ri-sub">${cardsWin(sum) ? `Сумма в зоне <b>${CARD_MIN}–${CARD_MAX}</b>: победа ×${CARD_MULT}` : sum < CARD_MIN ? `Недобор: нужно <b>${CARD_MIN}</b> или больше` : `Перебор: нужно <b>${CARD_MAX}</b> или меньше`}</div>`;
+  } else if (S.game === 'chest') {
     const idx = res && res.staked > 0 ? +Object.keys(res.bets)[0] - 1 : -1;
     const kind = idx >= 0 ? outcome.chests[idx] : null;
     if (kind) {
@@ -1787,6 +1932,10 @@ function renderRollInfo() {
 }
 function renderHistory() {
   const hist = (S.view.history || []).slice(0, S.game === 'dice' ? 8 : S.game === 'chest' ? 5 : 14);
+  if (S.game === 'cards') {
+    $('#history').innerHTML = hist.filter(h => h && typeof h.n === 'number').map(h => `<span class="cr-h ${cardsWin(h.n) ? 'win' : 'lose'}">${h.n}</span>`).join('');
+    return;
+  }
   if (S.game === 'chest') {
     $('#history').innerHTML = hist.filter(Array.isArray).map(h => `<span class="chest-h">${h.map(k => `<i class="${k}"></i>`).join('')}</span>`).join('');
     return;
@@ -1860,6 +2009,7 @@ function openRules() {
   $('#rulesDice').hidden = game !== 'dice';
   $('#rulesColor').hidden = game !== 'color';
   $('#rulesChest').hidden = game !== 'chest';
+  $('#rulesCards').hidden = game !== 'cards';
   openModal('modalRules');
 }
 function renderModeSeg() {
@@ -1874,8 +2024,10 @@ function renderGamePick() {
   document.querySelectorAll('#gamePick .game-card').forEach(b => b.classList.toggle('sel', b.dataset.game === game));
   $('#screen-menu').classList.toggle('sel-color', game === 'color');
   $('#screen-menu').classList.toggle('sel-chest', game === 'chest');
+  $('#screen-menu').classList.toggle('sel-cards', game === 'cards');
   $('#wordmark').innerHTML = game === 'dice'
     ? '<span class="wtxt wc">LUCK</span><span class="wtxt wc">CUBE</span>'
+    : game === 'cards' ? '<span class="wtxt wc">CARD</span><span class="wtxt wc">ROLL</span>'
     : game === 'chest' ? '<span class="wtxt wc">GOLDEN</span><span class="wtxt wc">PICK</span>'
     : '<span class="wtxt wc">COLOR</span><span class="wtxt wc">CLASH</span>';
   $('#tagline').textContent = GAMES[game].tagline;
@@ -1898,6 +2050,7 @@ function enterGame() {
   screen.classList.toggle('g-dice', S.game === 'dice');
   screen.classList.toggle('g-color', S.game === 'color');
   screen.classList.toggle('g-chest', S.game === 'chest');
+  screen.classList.toggle('g-cards', S.game === 'cards');
   buildBoard(S.game);
   setOrb(null);
   $('#chatLog').innerHTML = '';
@@ -2001,6 +2154,7 @@ function init() {
   buildDice();
   initAvatarEditor();
   document.querySelectorAll('.hero-chests').forEach(h => { h.innerHTML = chestClosed().repeat(3); });
+  document.querySelectorAll('.hero-cards').forEach(h => { h.innerHTML = HERO_CARDS.map(c => cardHtml(c, '', `transform:rotate(${c.rot}deg)`)).join(''); });
 
   const param = new URLSearchParams(location.search).get('room');
   if (param) pendingRoom = param;
