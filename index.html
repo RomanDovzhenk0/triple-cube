@@ -509,9 +509,9 @@ svg{display:block}
   <h2 id="rulesTitle">Правила</h2>
   <ul id="rulesDice">
     <li>На столе числа <b>1–4</b>.</li>
-    <li>Выберите фишку и нажимайте на цифры. За раунд можно поставить не больше чем на <b>2 цифры</b>. На <b>одну</b> цифру — до <b>10 000</b>, на <b>две</b> — до <b>2 000</b> на каждую.</li>
-    <li>Бросается <b>один кубик</b>. Если выпала одна из ваших цифр — вы выиграли.</li>
-    <li>Выплата <b>×2</b> на выигравшую цифру. Ставка входит в выплату: поставили 1 000 на цифру и угадали — получили 2 000.</li>
+    <li>Выберите фишку и нажмите на цифру. За раунд ставка делается только на <b>одну цифру</b>, нажатие на другую переносит ставку на неё. Максимум — <b>10 000</b>.</li>
+    <li>Бросается <b>один кубик</b>. Если выпала ваша цифра — вы выиграли.</li>
+    <li>Выплата <b>×2</b>. Ставка входит в выплату: поставили 1 000 и угадали — получили 2 000.</li>
   </ul>
   <ul id="rulesColor">
     <li>На поле три цвета: <b>красный</b>, <b>синий</b> и <b>золотой</b>.</li>
@@ -631,7 +631,7 @@ const COLORS = [
 const COLOR_W = COLORS.reduce((s, c) => s + c.w, 0);
 const DUEL_BONUS = 0.5;
 const GAMES = {
-  dice: {title:'Luck Cube', brand:'LUCK CUBE', tagline:'Один кубик · одно число', cells: DICE_CELLS, maxCells: 2, limited: true,
+  dice: {title:'Luck Cube', brand:'LUCK CUBE', tagline:'Один кубик · одно число', cells: DICE_CELLS, maxCells: 1, limited: true,
     action:'Бросить кубик', busy:'Бросок…', idle:'Делайте ставки, господа'},
   color: {title:'Color Clash', brand:'COLOR CLASH', tagline:'Угадай цвет', cells: COLORS.map(c => c.id), maxCells: 1, limited: false,
     action:'Крутить', busy:'Крутим…', idle:'Выберите цвет и сделайте ставку'}
@@ -793,11 +793,11 @@ function cleanBets(b, game) {
 function validateBets(b, balance, game, unlimited) {
   const g = GAMES[game], keys = Object.keys(b), n = keys.length;
   if (!n) return null;
-  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : 'Ставить можно максимум на 2 цифры';
+  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : 'Ставить можно только на одну цифру';
   if (g.limited && !unlimited) {
     const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
     if (keys.some(k => b[k] > cap)) {
-      return n === 1 ? `На одну цифру максимум ${fmt(LIMIT_SINGLE)}` : `При ставке на 2 цифры максимум ${fmt(LIMIT_MULTI)} на каждую`;
+      return `Максимальная ставка ${fmt(LIMIT_SINGLE)}`;
     }
   }
   if (sumBets(b) > balance) return 'Недостаточно фишек';
@@ -1413,12 +1413,9 @@ function placeChip(cell) {
     return;
   }
   const n = cells.length + (cur ? 0 : 1);
-  if (n > g.maxCells) return toast('Ставить можно максимум на 2 цифры', 'err');
+  if (n > g.maxCells) return toast('Ставить можно только на одну цифру', 'err');
   const limited = g.limited && !isInf();
-  if (limited && n > 1 && cells.some(k => S.myBets[k] > LIMIT_MULTI)) {
-    return toast(`При ставке на 2 цифры на каждую можно поставить не больше ${fmt(LIMIT_MULTI)}. Уменьшите ставку.`, 'err');
-  }
-  const cap = !limited ? Infinity : n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
+  const cap = !limited ? Infinity : LIMIT_SINGLE;
   const free = myBalance() - sumBets(S.myBets);
   const add = Math.min(S.chip, cap - cur, free);
   if (add <= 0) return toast(free <= 0 ? 'Недостаточно фишек' : `Лимит клетки — ${fmt(cap)}`, 'err');
@@ -1560,8 +1557,8 @@ function renderBetInfo() {
     ? `Ставка <b>${fmt(total)}</b>` + (isInf() ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
     : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : 'Выберите фишку и нажмите на клетку';
   $('#limitInfo').textContent = S.game === 'color' ? 'Без лимита · один цвет за раунд'
-    : isInf() ? `Без лимита · цифр ${n} из 2`
-    : n ? `Цифр ${n} из 2 · до ${fmt(n === 1 ? LIMIT_SINGLE : LIMIT_MULTI)} на цифру` : 'Лимит 10 000 · на 2 цифры по 2 000';
+    : isInf() ? 'Без лимита · одна цифра за раунд'
+    : `Лимит ${fmt(LIMIT_SINGLE)} · одна цифра за раунд`;
 }
 function renderActions() {
   const m = me(), open = bettingOpen(), locked = isLocked();
