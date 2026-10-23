@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Triple Cube и Color Clash — играйте против дилера или с друзьями за одним столом.">
-<title>Triple Cube</title>
+<meta name="description" content="Luck Cube и Color Clash — играйте против дилера или с друзьями за одним столом.">
+<title>Clash Game</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -228,6 +228,7 @@ svg{display:block}
 
 .board{display:grid;grid-template-columns:auto repeat(5,1fr);gap:7px;user-select:none;-webkit-user-select:none}
 .board.color{grid-template-columns:repeat(3,1fr);gap:10px}
+.board.dice{grid-template-columns:repeat(3,1fr);gap:10px}
 .mult{display:flex;align-items:center;justify-content:center;min-width:34px;padding:0 3px;border-radius:12px;font-size:12px;font-weight:800;color:var(--gold-1);background:rgba(0,0,0,.28);border:1px solid var(--gold-line);font-variant-numeric:tabular-nums;white-space:nowrap}
 .cell{position:relative;aspect-ratio:1.12;border-radius:14px;border:1px solid rgba(226,190,106,.32);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.12));display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:background .2s,border-color .2s,box-shadow .25s,transform .12s,filter .12s;-webkit-touch-callout:none}
 .cell:hover{border-color:rgba(226,190,106,.6)}
@@ -390,8 +391,7 @@ svg{display:block}
   <div class="menu-wrap center-v">
     <section class="hero">
       <div class="dice-row hero-dice" data-hero></div>
-      <h1 class="wordmark"><span class="wtxt wc">TRIPLE</span><span class="wtxt wc">CUBE</span></h1>
-      <p class="tagline">Кости и Color Clash</p>
+      <h1 class="wordmark"><span class="wtxt wc">CLASH</span><span class="wtxt wc">GAME</span></h1>
       <div class="divider"><i></i></div>
     </section>
     <div class="invite-banner" id="regInvite" hidden><i data-ic="users"></i><span>Вас пригласили за игровой стол. Представьтесь, чтобы сесть за него.</span></div>
@@ -422,7 +422,7 @@ svg{display:block}
       <div class="divider"><i></i></div>
     </section>
     <div class="games" id="gamePick">
-      <button class="game-card" data-game="dice"><span class="gc-ico" data-ic="dices"></span><b>Triple Cube</b><small>Кости · 18 чисел и трипл</small></button>
+      <button class="game-card" data-game="dice"><span class="gc-ico" data-ic="dices"></span><b>Luck Cube</b><small>Кубик · угадай число · ×2</small></button>
       <button class="game-card" data-game="color"><span class="gc-ico trio"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></span><b>Color Clash</b><small>Угадай цвет · до ×5</small></button>
     </div>
     <div class="seg" id="modeSeg">
@@ -443,7 +443,7 @@ svg{display:block}
 <div id="screen-game" class="screen">
   <header class="topbar">
     <button class="icon-btn" id="btnBack" title="В меню" data-ic="back"></button>
-    <div class="tb-brand"><span class="brand-mini gold-text" id="tbTitle">TRIPLE CUBE</span><span class="tb-sub" id="tbSub"></span></div>
+    <div class="tb-brand"><span class="brand-mini gold-text" id="tbTitle">LUCK CUBE</span><span class="tb-sub" id="tbSub"></span></div>
     <button class="btn-invite" id="btnInvite" hidden><i data-ic="userplus"></i><span>Пригласить</span></button>
     <div class="bal-pill"><span class="coin"></span><b id="bal">0</b></div>
     <button class="icon-btn" id="btnSound" title="Звук"></button>
@@ -508,12 +508,10 @@ svg{display:block}
   <div class="eyebrow">Как играть</div>
   <h2 id="rulesTitle">Правила</h2>
   <ul id="rulesDice">
-    <li>На столе числа <b>1–18</b> и клетка <b>«3×»</b>.</li>
-    <li>Выберите фишку и нажимайте на клетки: каждое нажатие добавляет фишку. Чтобы снять ставку с клетки, нажмите на неё правой кнопкой мыши или удерживайте палец.</li>
-    <li>За раунд можно поставить не больше чем на <b>3 клетки</b>. На <b>одну</b> клетку — до <b>10 000</b>, на <b>2–3</b> клетки — до <b>2 000</b> на каждую.</li>
-    <li>Три кубика бросаются одновременно. <b>Число выигрывает</b>, если оно выпало на любом из кубиков по отдельности или равно сумме всех трёх кубиков.<br><span class="muted">Пример: 3 · 6 · 2 → выигрывают 3, 6, 2 (кубики) и 11 (сумма: 3 + 6 + 2).</span></li>
-    <li><b>«3×»</b> выигрывает, если на всех трёх кубиках выпало одно и то же число.</li>
-    <li>Выплата зависит от ряда, коэффициент указан слева от поля: <b>1–5 — ×1.2</b>, <b>6–10 — ×1.5</b>, <b>11–15 — ×2</b>, <b>16–18 и «3×» — ×3</b>. Ставка входит в выплату: поставили 1 000 на 7 и выиграли — получили 1 500.</li>
+    <li>На столе числа <b>1–6</b>.</li>
+    <li>Выберите фишку и нажмите на цифру. За раунд ставка делается только на <b>одну цифру</b>, нажатие на другую переносит ставку на неё. Максимум — <b>10 000</b>.</li>
+    <li>Бросается <b>один кубик</b>. Если выпала ваша цифра — вы выиграли.</li>
+    <li>Выплата <b>×2</b>. Ставка входит в выплату: поставили 1 000 и угадали — получили 2 000.</li>
   </ul>
   <ul id="rulesColor">
     <li>На поле три цвета: <b>красный</b>, <b>синий</b> и <b>золотой</b>.</li>
@@ -623,7 +621,7 @@ const PEER_OPTS = {
 };
 
 // ================= Игры =================
-const DICE_CELLS = [...Array.from({length:18}, (_, i) => String(i + 1)), '3x'];
+const DICE_CELLS = ['1', '2', '3', '4', '5', '6'];
 // Color Clash: шансы обратны множителям (15:10:6), поэтому у всех цветов одинаковый небольшой перевес дилера
 const COLORS = [
   {id:'red', name:'Красный', mult:2, w:15},
@@ -633,8 +631,8 @@ const COLORS = [
 const COLOR_W = COLORS.reduce((s, c) => s + c.w, 0);
 const DUEL_BONUS = 0.5;
 const GAMES = {
-  dice: {title:'Triple Cube', brand:'TRIPLE CUBE', tagline:'Классическая игра в кости', cells: DICE_CELLS, maxCells: 3, limited: true,
-    action:'Бросить кубики', busy:'Бросок…', idle:'Делайте ставки, господа'},
+  dice: {title:'Luck Cube', brand:'LUCK CUBE', tagline:'Один кубик · одно число', cells: DICE_CELLS, maxCells: 1, limited: true,
+    action:'Бросить кубик', busy:'Бросок…', idle:'Делайте ставки, господа'},
   color: {title:'Color Clash', brand:'COLOR CLASH', tagline:'Угадай цвет', cells: COLORS.map(c => c.id), maxCells: 1, limited: false,
     action:'Крутить', busy:'Крутим…', idle:'Выберите цвет и сделайте ставку'}
 };
@@ -751,29 +749,17 @@ function claimDaily() {
   renderDaily(); renderMenu();
 }
 
-// ================= Правила: Triple Cube =================
-// Число выигрывает, если выпало на любом кубике по отдельности или равно сумме всех трёх.
+// ================= Правила: Luck Cube =================
+// Один кубик: выигрывает число, которое выпало. Выплата ×2 (ставка входит в выплату).
 function evaluateRoll(dice) {
-  const [a, b, c] = dice;
   const wins = new Map();
-  const add = (n, why) => {
-    if (n < 1 || n > 18) return;
-    if (!wins.has(n)) wins.set(n, []);
-    if (!wins.get(n).includes(why)) wins.get(n).push(why);
-  };
-  dice.forEach(v => add(v, 'куб'));
-  const total = a + b + c;
-  add(total, 'Σ');
-  return {wins, total, triple: a === b && b === c};
+  wins.set(dice[0], ['куб']);
+  return {wins, total: dice[0], triple: false};
 }
-// Коэффициент выплаты по рядам поля (ставка входит в выплату)
-function multOf(cell) {
-  if (cell === '3x') return 3;
-  const n = +cell;
-  return n <= 5 ? 1.2 : n <= 10 ? 1.5 : n <= 15 ? 2 : 3;
-}
+const DICE_MULT = 2;
+function multOf(cell) { return DICE_MULT; }
 const multLabel = m => '×' + m;
-function cellWins(cell, ev) { return cell === '3x' ? ev.triple : ev.wins.has(+cell); }
+function cellWins(cell, ev) { return ev.wins.has(+cell); }
 
 // ================= Общая логика ставок =================
 // outcome: {dice:[a,b,c]} для костей или {color, duel} для Color Clash
@@ -807,11 +793,11 @@ function cleanBets(b, game) {
 function validateBets(b, balance, game, unlimited) {
   const g = GAMES[game], keys = Object.keys(b), n = keys.length;
   if (!n) return null;
-  if (n > g.maxCells) return g.maxCells === 1 ? 'Ставка делается только на один цвет' : 'Ставить можно максимум на 3 клетки';
+  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : 'Ставить можно только на одну цифру';
   if (g.limited && !unlimited) {
     const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
     if (keys.some(k => b[k] > cap)) {
-      return n === 1 ? `На одну клетку максимум ${fmt(LIMIT_SINGLE)}` : `При ставке на 2–3 клетки максимум ${fmt(LIMIT_MULTI)} на каждую`;
+      return `Максимальная ставка ${fmt(LIMIT_SINGLE)}`;
     }
   }
   if (sumBets(b) > balance) return 'Недостаточно фишек';
@@ -878,11 +864,11 @@ function makeDie(row) {
 }
 function buildDice() {
   const row = $('#diceRow');
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 1; i++) {
     diceEls.push(makeDie(row)); spins.push({x:0, y:0, z:0});
     setDie(i, i + 1, false);
   }
-  document.querySelectorAll('[data-hero]').forEach(r => { for (let i = 0; i < 3; i++) makeDie(r); });
+  document.querySelectorAll('[data-hero]').forEach(r => { for (let i = 0; i < 1; i++) makeDie(r); });
 }
 function setDie(i, v, spin) {
   const {die} = diceEls[i], s = spins[i], [bx, by] = FACE_ROT[v];
@@ -1075,7 +1061,7 @@ class Room {
     if (this.destroyed || this.phase !== 'betting') return;
     this.clearTimer();
     this.phase = 'rolling';
-    const outcome = this.game === 'dice' ? {dice: [rnd6(), rnd6(), rnd6()]} : this.drawColorRound();
+    const outcome = this.game === 'dice' ? {dice: [rnd6()]} : this.drawColorRound();
     const results = {};
     for (const p of this.players.values()) {
       let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, bonus = 0, winCells = [];
@@ -1399,7 +1385,7 @@ function onRoll(msg) {
         if (r && r.staked > 0) parts.push(`${p.name} ${signed(r.payout - r.staked)}`);
       }
       const what = S.game === 'dice'
-        ? `${outcome.dice.join(' · ')} = ${ev.total}${ev.triple ? ' (три одинаковых!)' : ''}`
+        ? `выпало ${outcome.dice[0]} (×${DICE_MULT})`
         : `${colorOf(outcome.color).name.toLowerCase()} ×${colorOf(outcome.color).mult}${outcome.duel ? ' (дуэль)' : ''}`;
       addChat({sys: true, text: `Раунд ${msg.round}: ${what}${parts.length ? ' — ' + parts.join(', ') : ''}`});
     }
@@ -1426,12 +1412,9 @@ function placeChip(cell) {
     return;
   }
   const n = cells.length + (cur ? 0 : 1);
-  if (n > g.maxCells) return toast('Ставить можно максимум на 3 клетки', 'err');
+  if (n > g.maxCells) return toast('Ставить можно только на одну цифру', 'err');
   const limited = g.limited && !isInf();
-  if (limited && n > 1 && cells.some(k => S.myBets[k] > LIMIT_MULTI)) {
-    return toast(`При ставке на 2–3 клетки на каждую можно поставить не больше ${fmt(LIMIT_MULTI)}. Уменьшите ставку.`, 'err');
-  }
-  const cap = !limited ? Infinity : n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
+  const cap = !limited ? Infinity : LIMIT_SINGLE;
   const free = myBalance() - sumBets(S.myBets);
   const add = Math.min(S.chip, cap - cur, free);
   if (add <= 0) return toast(free <= 0 ? 'Недостаточно фишек' : `Лимит клетки — ${fmt(cap)}`, 'err');
@@ -1501,17 +1484,10 @@ function buildBoard(game) {
   const extras = '<span class="why"></span><span class="marks"></span><span class="stake"></span>';
   if (game === 'dice') {
     DICE_CELLS.forEach(c => {
-      if (['1', '6', '11', '16'].includes(c)) {
-        const m = document.createElement('div');
-        m.className = 'mult'; m.textContent = multLabel(multOf(c));
-        b.appendChild(m);
-      }
       const el = document.createElement('button');
-      el.className = 'cell' + (c === '3x' ? ' triple' : '');
+      el.className = 'cell';
       el.dataset.cell = c;
-      el.innerHTML = (c === '3x'
-        ? '<span class="lbl">3×</span><span class="sub">ТРИ ОДИНАКОВЫХ</span>'
-        : `<span class="num ${+c % 2 ? 'red' : 'black'}">${c}</span>`) + extras;
+      el.innerHTML = `<span class="num ${+c % 2 ? 'red' : 'black'}">${c}</span>` + extras;
       b.appendChild(el);
       cellEls[c] = el;
     });
@@ -1571,7 +1547,7 @@ function renderBoard() {
     el.classList.toggle('hit', hit);
     el.classList.toggle('won', hit && !!myLast);
     el.classList.toggle('lost', !hit && !!myLast);
-    el.querySelector('.why').textContent = hit && S.game === 'dice' && c !== '3x' ? lr.ev.wins.get(+c).join(' ') : '';
+    el.querySelector('.why').textContent = '';
   }
 }
 function renderBetInfo() {
@@ -1580,8 +1556,8 @@ function renderBetInfo() {
     ? `Ставка <b>${fmt(total)}</b>` + (isInf() ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
     : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : 'Выберите фишку и нажмите на клетку';
   $('#limitInfo').textContent = S.game === 'color' ? 'Без лимита · один цвет за раунд'
-    : isInf() ? `Без лимита · клеток ${n} из 3`
-    : n ? `Клеток ${n} из 3 · до ${fmt(n === 1 ? LIMIT_SINGLE : LIMIT_MULTI)} на клетку` : 'Лимит 10 000 · на 2–3 клетки по 2 000';
+    : isInf() ? 'Без лимита · одна цифра за раунд'
+    : `Лимит ${fmt(LIMIT_SINGLE)} · одна цифра за раунд`;
 }
 function renderActions() {
   const m = me(), open = bettingOpen(), locked = isLocked();
@@ -1639,10 +1615,8 @@ function renderRollInfo() {
   const {outcome, ev, res} = S.lastRoll;
   let h;
   if (S.game === 'dice') {
-    const [a, b, c] = outcome.dice;
-    h = `<div class="ri-main"><span class="dv">${a}</span><span class="op">+</span><span class="dv">${b}</span><span class="op">+</span><span class="dv">${c}</span><span class="op">=</span><span class="tot">${ev.total}</span>${ev.triple ? '<span class="trip">3×</span>' : ''}</div>`;
-    const nums = [...ev.wins.keys()].sort((x, y) => x - y);
-    h += `<div class="ri-sub">Выигрывают: <b>${nums.join(', ')}${ev.triple ? ', 3×' : ''}</b></div>`;
+    h = `<div class="ri-main"><span class="dv">${outcome.dice[0]}</span><span class="tot">×${DICE_MULT}</span></div>`;
+    h += `<div class="ri-sub">Выигрывает цифра: <b>${outcome.dice[0]}</b></div>`;
   } else {
     const col = colorOf(outcome.color);
     h = `<div class="ri-main"><span class="cpill"><i class="sphere ${col.id}"></i>${col.name}</span><span class="tot">×${col.mult}</span></div>`;
@@ -1658,7 +1632,7 @@ function renderRollInfo() {
 function renderHistory() {
   const hist = (S.view.history || []).slice(0, S.game === 'dice' ? 8 : 14);
   $('#history').innerHTML = S.game === 'dice'
-    ? hist.map(d => `<span class="${d[0] === d[1] && d[1] === d[2] ? 't' : ''}">${d.join('·')}<b>${d[0] + d[1] + d[2]}</b></span>`).join('')
+    ? hist.map(d => `<span><b style="margin:0">${d[0]}</b></span>`).join('')
     : hist.map(h => `<span class="sphere ${h.c}${h.duel ? ' duel' : ''}" title="${colorOf(h.c).name}${h.duel ? ' · дуэль' : ''}"></span>`).join('');
 }
 // В бесконечном режиме вместо баланса показываем итог сессии
@@ -1739,7 +1713,7 @@ function renderGamePick() {
   document.querySelectorAll('#gamePick .game-card').forEach(b => b.classList.toggle('sel', b.dataset.game === game));
   $('#screen-menu').classList.toggle('sel-color', game === 'color');
   $('#wordmark').innerHTML = game === 'dice'
-    ? '<span class="wtxt wc">TRIPLE</span><span class="wtxt wc">CUBE</span>'
+    ? '<span class="wtxt wc">LUCK</span><span class="wtxt wc">CUBE</span>'
     : '<span class="wtxt wc">COLOR</span><span class="wtxt wc">CLASH</span>';
   $('#tagline').textContent = GAMES[game].tagline;
 }
