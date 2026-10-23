@@ -228,7 +228,7 @@ svg{display:block}
 
 .board{display:grid;grid-template-columns:auto repeat(5,1fr);gap:7px;user-select:none;-webkit-user-select:none}
 .board.color{grid-template-columns:repeat(3,1fr);gap:10px}
-.board.dice{grid-template-columns:repeat(3,1fr);gap:10px}
+.board.dice{grid-template-columns:repeat(4,1fr);gap:10px}
 .mult{display:flex;align-items:center;justify-content:center;min-width:34px;padding:0 3px;border-radius:12px;font-size:12px;font-weight:800;color:var(--gold-1);background:rgba(0,0,0,.28);border:1px solid var(--gold-line);font-variant-numeric:tabular-nums;white-space:nowrap}
 .cell{position:relative;aspect-ratio:1.12;border-radius:14px;border:1px solid rgba(226,190,106,.32);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.12));display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:background .2s,border-color .2s,box-shadow .25s,transform .12s,filter .12s;-webkit-touch-callout:none}
 .cell:hover{border-color:rgba(226,190,106,.6)}
@@ -508,10 +508,10 @@ svg{display:block}
   <div class="eyebrow">Как играть</div>
   <h2 id="rulesTitle">Правила</h2>
   <ul id="rulesDice">
-    <li>На столе числа <b>1–6</b>.</li>
-    <li>Выберите фишку и нажмите на цифру. За раунд ставка делается только на <b>одну цифру</b>, нажатие на другую переносит ставку на неё. Максимум — <b>10 000</b>.</li>
-    <li>Бросается <b>один кубик</b>. Если выпала ваша цифра — вы выиграли.</li>
-    <li>Выплата <b>×2</b>. Ставка входит в выплату: поставили 1 000 и угадали — получили 2 000.</li>
+    <li>На столе числа <b>1–4</b>.</li>
+    <li>Выберите фишку и нажимайте на цифры. За раунд можно поставить не больше чем на <b>2 цифры</b>. На <b>одну</b> цифру — до <b>10 000</b>, на <b>две</b> — до <b>2 000</b> на каждую.</li>
+    <li>Бросается <b>один кубик</b>. Если выпала одна из ваших цифр — вы выиграли.</li>
+    <li>Выплата <b>×2</b> на выигравшую цифру. Ставка входит в выплату: поставили 1 000 на цифру и угадали — получили 2 000.</li>
   </ul>
   <ul id="rulesColor">
     <li>На поле три цвета: <b>красный</b>, <b>синий</b> и <b>золотой</b>.</li>
@@ -621,7 +621,7 @@ const PEER_OPTS = {
 };
 
 // ================= Игры =================
-const DICE_CELLS = ['1', '2', '3', '4', '5', '6'];
+const DICE_CELLS = ['1', '2', '3', '4'];
 // Color Clash: шансы обратны множителям (15:10:6), поэтому у всех цветов одинаковый небольшой перевес дилера
 const COLORS = [
   {id:'red', name:'Красный', mult:2, w:15},
@@ -631,7 +631,7 @@ const COLORS = [
 const COLOR_W = COLORS.reduce((s, c) => s + c.w, 0);
 const DUEL_BONUS = 0.5;
 const GAMES = {
-  dice: {title:'Luck Cube', brand:'LUCK CUBE', tagline:'Один кубик · одно число', cells: DICE_CELLS, maxCells: 1, limited: true,
+  dice: {title:'Luck Cube', brand:'LUCK CUBE', tagline:'Один кубик · одно число', cells: DICE_CELLS, maxCells: 2, limited: true,
     action:'Бросить кубик', busy:'Бросок…', idle:'Делайте ставки, господа'},
   color: {title:'Color Clash', brand:'COLOR CLASH', tagline:'Угадай цвет', cells: COLORS.map(c => c.id), maxCells: 1, limited: false,
     action:'Крутить', busy:'Крутим…', idle:'Выберите цвет и сделайте ставку'}
@@ -793,11 +793,11 @@ function cleanBets(b, game) {
 function validateBets(b, balance, game, unlimited) {
   const g = GAMES[game], keys = Object.keys(b), n = keys.length;
   if (!n) return null;
-  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : 'Ставить можно только на одну цифру';
+  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : 'Ставить можно максимум на 2 цифры';
   if (g.limited && !unlimited) {
     const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
     if (keys.some(k => b[k] > cap)) {
-      return `Максимальная ставка ${fmt(LIMIT_SINGLE)}`;
+      return n === 1 ? `На одну цифру максимум ${fmt(LIMIT_SINGLE)}` : `При ставке на 2 цифры максимум ${fmt(LIMIT_MULTI)} на каждую`;
     }
   }
   if (sumBets(b) > balance) return 'Недостаточно фишек';
@@ -851,9 +851,10 @@ function makeDie(row) {
   const die = slot.querySelector('.die');
   for (let v = 1; v <= 6; v++) {
     const f = document.createElement('div'); f.className = 'face f' + v;
-    PIPS[v].forEach(idx => {
+    const fv = v <= 4 ? v : v - 4; // на кубике только цифры 1–4 (лишние грани повторяют 1 и 2)
+    PIPS[fv].forEach(idx => {
       const p = document.createElement('span');
-      p.className = 'pip' + (v === 1 ? ' red' : '');
+      p.className = 'pip' + (fv === 1 ? ' red' : '');
       p.style.gridArea = `${Math.floor((idx - 1) / 3) + 1} / ${(idx - 1) % 3 + 1}`;
       f.appendChild(p);
     });
@@ -1061,7 +1062,7 @@ class Room {
     if (this.destroyed || this.phase !== 'betting') return;
     this.clearTimer();
     this.phase = 'rolling';
-    const outcome = this.game === 'dice' ? {dice: [rnd6()]} : this.drawColorRound();
+    const outcome = this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.drawColorRound();
     const results = {};
     for (const p of this.players.values()) {
       let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, bonus = 0, winCells = [];
@@ -1412,9 +1413,12 @@ function placeChip(cell) {
     return;
   }
   const n = cells.length + (cur ? 0 : 1);
-  if (n > g.maxCells) return toast('Ставить можно только на одну цифру', 'err');
+  if (n > g.maxCells) return toast('Ставить можно максимум на 2 цифры', 'err');
   const limited = g.limited && !isInf();
-  const cap = !limited ? Infinity : LIMIT_SINGLE;
+  if (limited && n > 1 && cells.some(k => S.myBets[k] > LIMIT_MULTI)) {
+    return toast(`При ставке на 2 цифры на каждую можно поставить не больше ${fmt(LIMIT_MULTI)}. Уменьшите ставку.`, 'err');
+  }
+  const cap = !limited ? Infinity : n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
   const free = myBalance() - sumBets(S.myBets);
   const add = Math.min(S.chip, cap - cur, free);
   if (add <= 0) return toast(free <= 0 ? 'Недостаточно фишек' : `Лимит клетки — ${fmt(cap)}`, 'err');
@@ -1556,8 +1560,8 @@ function renderBetInfo() {
     ? `Ставка <b>${fmt(total)}</b>` + (isInf() ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
     : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : 'Выберите фишку и нажмите на клетку';
   $('#limitInfo').textContent = S.game === 'color' ? 'Без лимита · один цвет за раунд'
-    : isInf() ? 'Без лимита · одна цифра за раунд'
-    : `Лимит ${fmt(LIMIT_SINGLE)} · одна цифра за раунд`;
+    : isInf() ? `Без лимита · цифр ${n} из 2`
+    : n ? `Цифр ${n} из 2 · до ${fmt(n === 1 ? LIMIT_SINGLE : LIMIT_MULTI)} на цифру` : 'Лимит 10 000 · на 2 цифры по 2 000';
 }
 function renderActions() {
   const m = me(), open = bettingOpen(), locked = isLocked();
