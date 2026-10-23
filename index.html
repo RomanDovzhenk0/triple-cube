@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="3 Кубика и Color Clash — играйте против дилера или с друзьями за одним столом.">
-<title>3 Кубика</title>
+<meta name="description" content="Triple Cube и Color Clash — играйте против дилера или с друзьями за одним столом.">
+<title>Triple Cube</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -390,7 +390,7 @@ svg{display:block}
   <div class="menu-wrap center-v">
     <section class="hero">
       <div class="dice-row hero-dice" data-hero></div>
-      <h1 class="wordmark"><span class="w3">3</span><span class="wtxt">КУБИКА</span></h1>
+      <h1 class="wordmark"><span class="wtxt wc">TRIPLE</span><span class="wtxt wc">CUBE</span></h1>
       <p class="tagline">Кости и Color Clash</p>
       <div class="divider"><i></i></div>
     </section>
@@ -422,7 +422,7 @@ svg{display:block}
       <div class="divider"><i></i></div>
     </section>
     <div class="games" id="gamePick">
-      <button class="game-card" data-game="dice"><span class="gc-ico" data-ic="dices"></span><b>3 Кубика</b><small>Кости · 18 чисел и трипл</small></button>
+      <button class="game-card" data-game="dice"><span class="gc-ico" data-ic="dices"></span><b>Triple Cube</b><small>Кости · 18 чисел и трипл</small></button>
       <button class="game-card" data-game="color"><span class="gc-ico trio"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></span><b>Color Clash</b><small>Угадай цвет · до ×5</small></button>
     </div>
     <div class="seg" id="modeSeg">
@@ -443,7 +443,7 @@ svg{display:block}
 <div id="screen-game" class="screen">
   <header class="topbar">
     <button class="icon-btn" id="btnBack" title="В меню" data-ic="back"></button>
-    <div class="tb-brand"><span class="brand-mini gold-text" id="tbTitle">3 КУБИКА</span><span class="tb-sub" id="tbSub"></span></div>
+    <div class="tb-brand"><span class="brand-mini gold-text" id="tbTitle">TRIPLE CUBE</span><span class="tb-sub" id="tbSub"></span></div>
     <button class="btn-invite" id="btnInvite" hidden><i data-ic="userplus"></i><span>Пригласить</span></button>
     <div class="bal-pill"><span class="coin"></span><b id="bal">0</b></div>
     <button class="icon-btn" id="btnSound" title="Звук"></button>
@@ -511,9 +511,9 @@ svg{display:block}
     <li>На столе числа <b>1–18</b> и клетка <b>«3×»</b>.</li>
     <li>Выберите фишку и нажимайте на клетки: каждое нажатие добавляет фишку. Чтобы снять ставку с клетки, нажмите на неё правой кнопкой мыши или удерживайте палец.</li>
     <li>За раунд можно поставить не больше чем на <b>3 клетки</b>. На <b>одну</b> клетку — до <b>10 000</b>, на <b>2–3</b> клетки — до <b>2 000</b> на каждую.</li>
-    <li>Три кубика бросаются одновременно. <b>Число выигрывает</b>, если оно выпало на любом кубике, равно сумме любых двух кубиков или сумме всех трёх.<br><span class="muted">Пример: 2 · 5 · 4 → выигрывают 2, 4, 5 (кубики), 6, 7, 9 (пары) и 11 (сумма).</span></li>
+    <li>Три кубика бросаются одновременно. <b>Число выигрывает</b>, если оно выпало на любом из кубиков по отдельности или равно сумме всех трёх кубиков.<br><span class="muted">Пример: 3 · 6 · 2 → выигрывают 3, 6, 2 (кубики) и 11 (сумма: 3 + 6 + 2).</span></li>
     <li><b>«3×»</b> выигрывает, если на всех трёх кубиках выпало одно и то же число.</li>
-    <li>Выплата зависит от ряда, коэффициент указан слева от поля: <b>1–5 — ×2</b>, <b>6–10 — ×1.2</b>, <b>11–15 — ×3</b>, <b>16–18 и «3×» — ×4</b>. Ставка входит в выплату: поставили 1 000 на 7 и выиграли — получили 1 200.</li>
+    <li>Выплата зависит от ряда, коэффициент указан слева от поля: <b>1–5 — ×1.2</b>, <b>6–10 — ×1.5</b>, <b>11–15 — ×2</b>, <b>16–18 и «3×» — ×3</b>. Ставка входит в выплату: поставили 1 000 на 7 и выиграли — получили 1 500.</li>
   </ul>
   <ul id="rulesColor">
     <li>На поле три цвета: <b>красный</b>, <b>синий</b> и <b>золотой</b>.</li>
@@ -633,7 +633,7 @@ const COLORS = [
 const COLOR_W = COLORS.reduce((s, c) => s + c.w, 0);
 const DUEL_BONUS = 0.5;
 const GAMES = {
-  dice: {title:'3 Кубика', brand:'3 КУБИКА', tagline:'Классическая игра в кости', cells: DICE_CELLS, maxCells: 3, limited: true,
+  dice: {title:'Triple Cube', brand:'TRIPLE CUBE', tagline:'Классическая игра в кости', cells: DICE_CELLS, maxCells: 3, limited: true,
     action:'Бросить кубики', busy:'Бросок…', idle:'Делайте ставки, господа'},
   color: {title:'Color Clash', brand:'COLOR CLASH', tagline:'Угадай цвет', cells: COLORS.map(c => c.id), maxCells: 1, limited: false,
     action:'Крутить', busy:'Крутим…', idle:'Выберите цвет и сделайте ставку'}
@@ -751,8 +751,8 @@ function claimDaily() {
   renderDaily(); renderMenu();
 }
 
-// ================= Правила: 3 Кубика =================
-// Число выигрывает, если выпало на кубике, равно сумме любой пары или сумме всех трёх.
+// ================= Правила: Triple Cube =================
+// Число выигрывает, если выпало на любом кубике по отдельности или равно сумме всех трёх.
 function evaluateRoll(dice) {
   const [a, b, c] = dice;
   const wins = new Map();
@@ -762,16 +762,15 @@ function evaluateRoll(dice) {
     if (!wins.get(n).includes(why)) wins.get(n).push(why);
   };
   dice.forEach(v => add(v, 'куб'));
-  add(a + b, `${a}+${b}`); add(a + c, `${a}+${c}`); add(b + c, `${b}+${c}`);
   const total = a + b + c;
   add(total, 'Σ');
   return {wins, total, triple: a === b && b === c};
 }
 // Коэффициент выплаты по рядам поля (ставка входит в выплату)
 function multOf(cell) {
-  if (cell === '3x') return 4;
+  if (cell === '3x') return 3;
   const n = +cell;
-  return n <= 5 ? 2 : n <= 10 ? 1.2 : n <= 15 ? 3 : 4;
+  return n <= 5 ? 1.2 : n <= 10 ? 1.5 : n <= 15 ? 2 : 3;
 }
 const multLabel = m => '×' + m;
 function cellWins(cell, ev) { return cell === '3x' ? ev.triple : ev.wins.has(+cell); }
@@ -1642,7 +1641,6 @@ function renderRollInfo() {
   if (S.game === 'dice') {
     const [a, b, c] = outcome.dice;
     h = `<div class="ri-main"><span class="dv">${a}</span><span class="op">+</span><span class="dv">${b}</span><span class="op">+</span><span class="dv">${c}</span><span class="op">=</span><span class="tot">${ev.total}</span>${ev.triple ? '<span class="trip">3×</span>' : ''}</div>`;
-    h += `<div class="ri-sub">Пары: ${a}+${b}=<b>${a + b}</b> · ${a}+${c}=<b>${a + c}</b> · ${b}+${c}=<b>${b + c}</b></div>`;
     const nums = [...ev.wins.keys()].sort((x, y) => x - y);
     h += `<div class="ri-sub">Выигрывают: <b>${nums.join(', ')}${ev.triple ? ', 3×' : ''}</b></div>`;
   } else {
@@ -1741,7 +1739,7 @@ function renderGamePick() {
   document.querySelectorAll('#gamePick .game-card').forEach(b => b.classList.toggle('sel', b.dataset.game === game));
   $('#screen-menu').classList.toggle('sel-color', game === 'color');
   $('#wordmark').innerHTML = game === 'dice'
-    ? '<span class="w3">3</span><span class="wtxt">КУБИКА</span>'
+    ? '<span class="wtxt wc">TRIPLE</span><span class="wtxt wc">CUBE</span>'
     : '<span class="wtxt wc">COLOR</span><span class="wtxt wc">CLASH</span>';
   $('#tagline').textContent = GAMES[game].tagline;
 }
